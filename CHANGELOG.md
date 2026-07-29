@@ -42,5 +42,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/databridge/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/yourusername/databridge/releases/tag/v1.0.0
+[Unreleased]: https://github.com/chauketlou8-tech/databridge/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/chauketlou8-tech/databridge/releases/tag/v1.0.0
