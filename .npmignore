@@ -1,0 +1,16 @@
+# Build artifacts
+/dist
+/build
+
+# Tests & examples
+/tests
+/examples
+
+# Configs not needed in package
+.gitignore
+.eslintrc.js
+tsconfig.json
+
+# Docs
+/Docs
+*.md

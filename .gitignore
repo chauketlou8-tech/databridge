@@ -1,6 +1,5 @@
 .idea
 assets/logo.tsx
-assets/logo.jpg
 node_modules/
 .dist
-*.png
+*.jpg
