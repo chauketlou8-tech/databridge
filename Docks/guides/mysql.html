@@ -81,8 +81,17 @@ const products = await Product.find();</code></pre>
 
 <footer>
     <div class="container">
-        <p>&copy; 2026 DataBridge. MIT License</p>
+        <p>&copy; <span id="year"></span> DataBridge. MIT License</p>
     </div>
 </footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const year = document.getElementById('year');
+        if (year) {
+            year.textContent = new Date().getFullYear().toString();
+        }
+    });
+</script>
 </body>
 </html>
