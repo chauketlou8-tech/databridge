@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Models - DataBridge API</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="../index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="../getting-started/installation.html">Getting Started</a></li>
+            <li><a href="connection.html">API</a></li>
+            <li><a href="../guides/postgres.html">Guides</a></li>
+            <li><a href="https://github.com/yourusername/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="container">
+        <h1>Models</h1>
+
+        <h2>Model.create()</h2>
+        <p>Creates a new record.</p>
+
+        <h3>Syntax</h3>
+        <pre><code>model.create(data: Record<string, any>): Promise<Document></code></pre>
+
+        <h3>Example</h3>
+        <pre><code>await User.create({
+    name: "John",
+    email: "john@example.com",
+    age: 21
+});</code></pre>
+
+        <h2>Model.find()</h2>
+        <p>Finds all records matching a query.</p>
+
+        <h3>Syntax</h3>
+        <pre><code>model.find(query?: Query): Promise<Document[]></code></pre>
+
+        <h3>Example</h3>
+        <pre><code>const users = await User.find({ age: { $gt: 18 } });</code></pre>
+
+        <h2>Model.findOne()</h2>
+        <p>Finds a single record matching a query.</p>
+
+        <h3>Syntax</h3>
+        <pre><code>model.findOne(query: Query): Promise<Document | null></code></pre>
+
+        <h3>Example</h3>
+        <pre><code>const user = await User.findOne({ email: "john@example.com" });</code></pre>
+
+        <h2>Model.update()</h2>
+        <p>Updates records matching a query.</p>
+
+        <h3>Syntax</h3>
+        <pre><code>model.update(filter: Query, data: Record<string, any>): Promise<UpdateResult></code></pre>
+
+        <h3>Example</h3>
+        <pre><code>await User.update(
+    { name: "John" },
+    { age: 22 }
+);</code></pre>
+
+        <h2>Model.delete()</h2>
+        <p>Deletes records matching a query.</p>
+
+        <h3>Syntax</h3>
+        <pre><code>model.delete(query: Query): Promise<DeleteResult></code></pre>
+
+        <h3>Example</h3>
+        <pre><code>await User.delete({ name: "John" });</code></pre>
+
+        <div class="next">
+            <a href="connection.html">← Previous: Connection</a>
+            <a href="queries.html">Next: Queries →</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 DataBridge. MIT License</p>
+    </div>
+</footer>
+</body>
+</html>

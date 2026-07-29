@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queries - DataBridge API</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="../index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="../getting-started/installation.html">Getting Started</a></li>
+            <li><a href="connection.html">API</a></li>
+            <li><a href="../guides/postgres.html">Guides</a></li>
+            <li><a href="https://github.com/yourusername/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="container">
+        <h1>Query API</h1>
+
+        <h2>Query Builder</h2>
+        <p>Build queries using a fluent interface.</p>
+
+        <h3>where()</h3>
+        <p>Adds a filter condition.</p>
+        <pre><code>User.where("age").greaterThan(18).execute();</code></pre>
+
+        <h3>sort()</h3>
+        <p>Sorts results.</p>
+        <pre><code>User.sort("name", "asc").execute();</code></pre>
+
+        <h3>limit()</h3>
+        <p>Limits the number of results.</p>
+        <pre><code>User.limit(10).execute();</code></pre>
+
+        <h3>skip()</h3>
+        <p>Skips a number of results.</p>
+        <pre><code>User.skip(20).execute();</code></pre>
+
+        <h3>select()</h3>
+        <p>Selects specific fields.</p>
+        <pre><code>User.select("name", "email").execute();</code></pre>
+
+        <h2>Complete Example</h2>
+        <pre><code>const users = await User
+    .where("age")
+    .greaterThan(18)
+    .sort("name", "asc")
+    .limit(10)
+    .select("name", "email")
+    .execute();</code></pre>
+
+        <div class="next">
+            <a href="models.html">← Previous: Models</a>
+            <a href="../guides/postgres.html">Next: Guides →</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 DataBridge. MIT License</p>
+    </div>
+</footer>
+</body>
+</html>

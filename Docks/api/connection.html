@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection - DataBridge API</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="../index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="../getting-started/installation.html">Getting Started</a></li>
+            <li><a href="connection.html">API</a></li>
+            <li><a href="../guides/postgres.html">Guides</a></li>
+            <li><a href="https://github.com/yourusername/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="container">
+        <h1>API Reference</h1>
+
+        <h2>DataBridge.connect()</h2>
+        <p>Establishes a connection to a database.</p>
+
+        <h3>Syntax</h3>
+        <pre><code>DataBridge.connect(config: ConnectionConfig): Promise<Database></code></pre>
+
+        <h3>Parameters</h3>
+        <pre><code>interface ConnectionConfig {
+    provider: "postgres" | "mysql" | "mongodb" | "sqlite";
+    url?: string;
+    host?: string;
+    port?: number;
+    user?: string;
+    password?: string;
+    database?: string;
+    options?: Record<string, any>;
+}</code></pre>
+
+        <h3>Example</h3>
+        <pre><code>const db = await DataBridge.connect({
+    provider: "postgres",
+    url: "postgres://user:password@localhost:5432/database"
+});</code></pre>
+
+        <h2>db.model()</h2>
+        <p>Creates a new model for a collection or table.</p>
+
+        <h3>Syntax</h3>
+        <pre><code>db.model(name: string, schema: Schema): Model</code></pre>
+
+        <h3>Example</h3>
+        <pre><code>const User = db.model("User", new Schema({
+    name: String,
+    email: String
+}));</code></pre>
+
+        <div class="next">
+            <a href="../getting-started/quick-start.html">← Previous: Quick Start</a>
+            <a href="models.html">Next: Models →</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 DataBridge. MIT License</p>
+    </div>
+</footer>
+</body>
+</html>
