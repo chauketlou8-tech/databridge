@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Guide - DataBridge</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="../index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="../getting-started/installation.html">Getting Started</a></li>
+            <li><a href="../api/connection.html">API</a></li>
+            <li><a href="postgres.html">Guides</a></li>
+            <li><a href="https://github.com/yourusername/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="container">
+        <h1>MySQL Guide</h1>
+
+        <h2>Connection</h2>
+        <pre><code>const db = await DataBridge.connect({
+    provider: "mysql",
+    host: "localhost",
+    user: "root",
+    password: "password",
+    database: "myapp"
+});</code></pre>
+
+        <h2>Connection Options</h2>
+        <pre><code>const db = await DataBridge.connect({
+    provider: "mysql",
+    host: "localhost",
+    port: 3306,
+    user: "root",
+    password: "password",
+    database: "myapp",
+    options: {
+        maxConnections: 10,
+        idleTimeout: 30000,
+        ssl: true
+    }
+});</code></pre>
+
+        <h2>Example</h2>
+        <pre><code>import { DataBridge, Schema } from "databridge";
+
+const db = await DataBridge.connect({
+    provider: "mysql",
+    host: "localhost",
+    user: "root",
+    password: "password",
+    database: "myapp"
+});
+
+const Product = db.model("Product", new Schema({
+    name: String,
+    price: Number,
+    category: String
+}));
+
+await Product.create({
+    name: "Laptop",
+    price: 1200,
+    category: "Technology"
+});
+
+const products = await Product.find();</code></pre>
+
+        <div class="next">
+            <a href="postgres.html">← Previous: PostgreSQL</a>
+            <a href="mongodb.html">Next: MongoDB →</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 DataBridge. MIT License</p>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite Guide - DataBridge</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="../index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="../getting-started/installation.html">Getting Started</a></li>
+            <li><a href="../api/connection.html">API</a></li>
+            <li><a href="postgres.html">Guides</a></li>
+            <li><a href="https://github.com/yourusername/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="container">
+        <h1>SQLite Guide</h1>
+
+        <h2>Connection</h2>
+        <pre><code>const db = await DataBridge.connect({
+    provider: "sqlite",
+    filename: "./database.sqlite"
+});</code></pre>
+
+        <h2>Connection Options</h2>
+        <pre><code>const db = await DataBridge.connect({
+    provider: "sqlite",
+    filename: "./database.sqlite",
+    options: {
+        readonly: false,
+        timeout: 5000
+    }
+});</code></pre>
+
+        <h2>In-Memory Database</h2>
+        <pre><code>const db = await DataBridge.connect({
+    provider: "sqlite",
+    filename: ":memory:"
+});</code></pre>
+
+        <h2>Example</h2>
+        <pre><code>import { DataBridge, Schema } from "databridge";
+
+const db = await DataBridge.connect({
+    provider: "sqlite",
+    filename: "./myapp.sqlite"
+});
+
+const Task = db.model("Task", new Schema({
+    title: String,
+    description: String,
+    completed: Boolean
+}));
+
+await Task.create({
+    title: "Write documentation",
+    description: "Complete the user guide",
+    completed: false
+});
+
+const tasks = await Task.find();</code></pre>
+
+        <div class="next">
+            <a href="mongodb.html">← Previous: MongoDB</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 DataBridge. MIT License</p>
+    </div>
+</footer>
+</body>
+</html>

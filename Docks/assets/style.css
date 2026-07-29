@@ -7,8 +7,8 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
-    color: #1a1a2e;
-    background: #fafafa;
+    background: #0a0e17;
+    color: #c8d6e5;
 }
 
 .container {
@@ -18,12 +18,13 @@ body {
 }
 
 nav {
-    background: #1a1a2e;
+    background: #0d1421;
     padding: 16px 0;
     position: sticky;
     top: 0;
     z-index: 100;
-    border-bottom: 1px solid #2a2a4e;
+    border-bottom: 1px solid #00d4ff33;
+    box-shadow: 0 0 30px #00d4ff0d;
 }
 
 nav .container {
@@ -33,11 +34,12 @@ nav .container {
 }
 
 nav .logo {
-    color: white;
+    color: #00d4ff;
     font-size: 20px;
     font-weight: 700;
     text-decoration: none;
     letter-spacing: -0.5px;
+    text-shadow: 0 0 20px #00d4ff4d;
 }
 
 nav ul {
@@ -48,20 +50,21 @@ nav ul {
 }
 
 nav ul a {
-    color: #a0a0b0;
+    color: #8892b0;
     text-decoration: none;
     font-size: 14px;
-    transition: color 0.2s;
+    transition: all 0.3s;
 }
 
 nav ul a:hover {
-    color: white;
+    color: #00d4ff;
+    text-shadow: 0 0 20px #00d4ff33;
 }
 
 header {
-    background: #1a1a2e;
+    background: #0d1421;
     padding: 80px 0 60px 0;
-    border-bottom: 1px solid #2a2a4e;
+    border-bottom: 1px solid #00d4ff22;
 }
 
 .hero {
@@ -71,15 +74,16 @@ header {
 }
 
 .hero h1 {
-    color: white;
+    color: #00d4ff;
     font-size: 48px;
     font-weight: 800;
     letter-spacing: -1px;
     margin-bottom: 12px;
+    text-shadow: 0 0 40px #00d4ff33;
 }
 
 .hero p {
-    color: #a0a0b0;
+    color: #8892b0;
     font-size: 18px;
     margin-bottom: 32px;
 }
@@ -97,27 +101,30 @@ header {
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
-    transition: all 0.2s;
+    transition: all 0.3s;
 }
 
 .btn.primary {
-    background: #4a9eff;
-    color: white;
+    background: #00d4ff;
+    color: #0a0e17;
 }
 
 .btn.primary:hover {
-    background: #3a7fd4;
+    background: #00e5ff;
+    box-shadow: 0 0 30px #00d4ff4d;
+    transform: translateY(-2px);
 }
 
 .btn.secondary {
     background: transparent;
-    color: #a0a0b0;
-    border: 1px solid #3a3a5e;
+    color: #00d4ff;
+    border: 1px solid #00d4ff66;
 }
 
 .btn.secondary:hover {
-    background: #2a2a4e;
-    color: white;
+    background: #00d4ff1a;
+    box-shadow: 0 0 20px #00d4ff33;
+    transform: translateY(-2px);
 }
 
 section {
@@ -125,7 +132,7 @@ section {
 }
 
 .features {
-    background: white;
+    background: #0a0e17;
 }
 
 .grid {
@@ -135,42 +142,52 @@ section {
 }
 
 .card {
-    background: #f8f9fc;
+    background: #0d1421;
     padding: 24px;
     border-radius: 8px;
-    border: 1px solid #e8e8f0;
+    border: 1px solid #00d4ff22;
+    transition: all 0.3s;
+}
+
+.card:hover {
+    border-color: #00d4ff66;
+    box-shadow: 0 0 30px #00d4ff1a;
+    transform: translateY(-4px);
 }
 
 .card h3 {
     font-size: 16px;
     margin-bottom: 8px;
-    color: #1a1a2e;
+    color: #00d4ff;
 }
 
 .card p {
     font-size: 14px;
-    color: #5a5a7a;
+    color: #8892b0;
     line-height: 1.5;
 }
 
 .example {
-    background: #f8f9fc;
+    background: #0a0e17;
 }
 
 .example h2 {
     font-size: 24px;
     margin-bottom: 24px;
     text-align: center;
+    color: #00d4ff;
+    text-shadow: 0 0 30px #00d4ff33;
 }
 
 pre {
-    background: #1a1a2e;
-    color: #e0e0e0;
+    background: #0d1421;
+    color: #c8d6e5;
     padding: 24px;
     border-radius: 8px;
     overflow-x: auto;
     font-size: 14px;
     line-height: 1.6;
+    border: 1px solid #00d4ff22;
 }
 
 code {
@@ -178,59 +195,68 @@ code {
 }
 
 footer {
-    background: white;
+    background: #0d1421;
     padding: 32px 0;
-    border-top: 1px solid #e8e8f0;
+    border-top: 1px solid #00d4ff22;
     text-align: center;
-    color: #8a8aaa;
+    color: #8892b0;
     font-size: 14px;
 }
 
+/* Page layout */
+
 .page {
     padding: 40px 0 60px 0;
-    background: white;
+    background: #0a0e17;
 }
 
 .page h1 {
     font-size: 32px;
     margin-bottom: 16px;
     padding-bottom: 16px;
-    border-bottom: 1px solid #e8e8f0;
+    border-bottom: 1px solid #00d4ff22;
+    color: #00d4ff;
+    text-shadow: 0 0 30px #00d4ff33;
 }
 
 .page h2 {
     font-size: 22px;
     margin: 32px 0 12px 0;
+    color: #00d4ff;
 }
 
 .page h3 {
     font-size: 18px;
     margin: 24px 0 8px 0;
+    color: #c8d6e5;
 }
 
 .page p {
-    color: #4a4a6a;
+    color: #8892b0;
     margin-bottom: 16px;
 }
 
 .page pre {
     margin: 16px 0 24px 0;
+    border-color: #00d4ff22;
 }
 
 .page .next {
     margin-top: 40px;
     padding-top: 24px;
-    border-top: 1px solid #e8e8f0;
+    border-top: 1px solid #00d4ff22;
     display: flex;
     justify-content: space-between;
 }
 
 .page .next a {
-    color: #4a9eff;
+    color: #00d4ff;
     text-decoration: none;
     font-weight: 600;
+    transition: all 0.3s;
 }
 
 .page .next a:hover {
-    text-decoration: underline;
+    color: #00e5ff;
+    text-shadow: 0 0 20px #00d4ff4d;
 }
