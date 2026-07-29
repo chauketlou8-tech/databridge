@@ -11,10 +11,22 @@
     "url": "git+https://github.com/chauketlou8-tech/databridge.git"
   },
   "license": "MIT",
-  "author": "Tlou Elvis Chauke",
+  "author": "Tlou E Chauke @chaukeelvis <chauketlou8@gmail.com>",
   "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "jest"
-  }
+  },
+  "keywords": [
+    "database",
+    "MySql",
+    "PostgreSQL",
+    "MongoDB",
+    "SqLite",
+    "SQL",
+    "NoSQL",
+    "relational",
+    "non-relational",
+    "bridging"
+  ]
 }
