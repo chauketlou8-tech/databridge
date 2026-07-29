@@ -17,6 +17,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
+[![Docs](https://img.shields.io/badge/docs-databridge--documentation-blue?style=for-the-badge)](https://databridge-documentation-nljdbjw22-elvis12.vercel.app)
 </div>
 
 ---
@@ -28,6 +29,7 @@
 - [Supported Databases](#supported-databases)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Documentation](https://databridge-documentation-nljdbjw22-elvis12.vercel.app)
 - [Database Connections](#database-connections)
 - [Models](#models)
 - [CRUD Operations](#crud-operations)
@@ -103,6 +105,8 @@ pnpm add databridge
 ---
 
 ## Quick Start
+
+For full documentation, visit [databridge-documentation](https://databridge-documentation-nljdbjw22-elvis12.vercel.app).
 
 ```typescript
 import { DataBridge, Schema } from "databridge";

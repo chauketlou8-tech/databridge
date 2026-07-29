@@ -1,7 +1,7 @@
 {
   "name": "databridge",
   "version": "1.0.0",
-  "description": "modern, type-safe database abstraction layer that provides a unified API across SQL and NoSQL databases.",
+  "description": "Modern, type-safe database abstraction layer that provides a unified API across SQL and NoSQL databases.",
   "homepage": "https://github.com/chauketlou8-tech/databridge#readme",
   "bugs": {
     "url": "https://github.com/chauketlou8-tech/databridge/issues"
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/chauketlou8-tech/databridge.git"
   },
   "license": "MIT",
-  "author": "Tlou E Chauke @chaukeelvis <chauketlou8@gmail.com>",
+  "author": "Tlou E Chauke <chauketlou8@gmail.com>",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -19,12 +19,12 @@
   },
   "keywords": [
     "database",
-    "MySql",
-    "PostgreSQL",
-    "MongoDB",
-    "SqLite",
-    "SQL",
-    "NoSQL",
+    "mysql",
+    "postgresql",
+    "mongodb",
+    "sqlite",
+    "sql",
+    "nosql",
     "relational",
     "non-relational",
     "bridging"
