@@ -8,9 +8,11 @@
 
 # Configs not needed in package
 .gitignore
-.eslintrc.js
 tsconfig.json
 
 # Docs
 /Docs
 *.md
+
+# deployment
+.vercel
