@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataBridge - Documentation</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="getting-started/installation.html">Getting Started</a></li>
+            <li><a href="api/connection.html">API</a></li>
+            <li><a href="guides/postgres.html">Guides</a></li>
+            <li><a href="https://github.com/yourusername/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<header>
+    <div class="container">
+        <div class="hero">
+            <h1>DataBridge</h1>
+            <p>Unified database abstraction for the modern TypeScript era</p>
+            <div class="buttons">
+                <a href="getting-started/installation.html" class="btn primary">Get Started</a>
+                <a href="https://github.com/yourusername/databridge" class="btn secondary">View on GitHub</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section class="features">
+    <div class="container">
+        <div class="grid">
+            <div class="card">
+                <h3>Unified API</h3>
+                <p>One consistent interface across PostgreSQL, MySQL, MongoDB, and SQLite</p>
+            </div>
+            <div class="card">
+                <h3>TypeScript First</h3>
+                <p>Full type safety with IntelliSense support for a better developer experience</p>
+            </div>
+            <div class="card">
+                <h3>Extensible</h3>
+                <p>Add any database with a simple driver interface</p>
+            </div>
+            <div class="card">
+                <h3>Schema Validation</h3>
+                <p>Define and validate your data structures with built-in validators</p>
+            </div>
+            <div class="card">
+                <h3>Query Builder</h3>
+                <p>Fluent, database-agnostic query interface</p>
+            </div>
+            <div class="card">
+                <h3>Migration System</h3>
+                <p>Version control for your database schema</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="example">
+    <div class="container">
+        <h2>Quick Example</h2>
+        <pre><code>import { DataBridge, Schema } from "databridge";
+
+const db = await DataBridge.connect({
+    provider: "postgres",
+    url: "postgres://localhost:5432/myapp"
+});
+
+const User = db.model("User", new Schema({
+    name: String,
+    email: String,
+    age: Number
+}));
+
+await User.create({
+    name: "John",
+    email: "john@example.com",
+    age: 21
+});
+
+const users = await User.find();</code></pre>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 DataBridge. MIT License</p>
+    </div>
+</footer>
+</body>
+</html>
