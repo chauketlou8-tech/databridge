@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo1.jpg" alt="DataBridge Logo" width="1024" />
+<img src="assets/logo1.jpg" alt="DataBridge Logo" width="300" />
 
   <h1>DataBridge</h1>
   <p><strong>One API to rule them all</strong></p>
