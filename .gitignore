@@ -1,5 +1,4 @@
 .idea
-assets/logo.tsx
 node_modules/
 .dist
 *.jpg
