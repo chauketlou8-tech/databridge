@@ -17,6 +17,9 @@
   "scripts": {
     "test": "jest"
   },
+  "bin": {
+    "databridge": ""
+  },
   "keywords": [
     "database",
     "mysql",
@@ -28,5 +31,11 @@
     "relational",
     "non-relational",
     "bridging"
-  ]
+  ],
+  "devDependencies": {
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "tsx": "4.23.1"
+  }
 }
