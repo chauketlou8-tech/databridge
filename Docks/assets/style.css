@@ -185,3 +185,52 @@ footer {
     color: #8a8aaa;
     font-size: 14px;
 }
+
+.page {
+    padding: 40px 0 60px 0;
+    background: white;
+}
+
+.page h1 {
+    font-size: 32px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e8e8f0;
+}
+
+.page h2 {
+    font-size: 22px;
+    margin: 32px 0 12px 0;
+}
+
+.page h3 {
+    font-size: 18px;
+    margin: 24px 0 8px 0;
+}
+
+.page p {
+    color: #4a4a6a;
+    margin-bottom: 16px;
+}
+
+.page pre {
+    margin: 16px 0 24px 0;
+}
+
+.page .next {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid #e8e8f0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.page .next a {
+    color: #4a9eff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.page .next a:hover {
+    text-decoration: underline;
+}
