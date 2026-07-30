@@ -35,7 +35,7 @@
 - [CRUD Operations](#crud-operations)
 - [Query API](#query-api)
 - [Schema Validation](#schema-validation)
-- [Architecture](docks/architecture.md)
+- [Architecture](#architecture)
 - [Project Structure](#project-structure)
 - [Roadmap](#roadmap)
 - [Philosophy](#philosophy)
@@ -267,7 +267,7 @@ const UserSchema = new Schema({
 
 ## Architecture
 
-DataBridge uses a clean, driver-based architecture. For a detailed architecture flow diagram and explanation, see [docks/architecture.md](docks/architecture.md).
+DataBridge uses a clean, driver-based architecture. For a detailed architecture flow diagram and explanation, see [Docks/ARCHITECTURE.md](Docks/ARCHITECTURE.md).
 
 ```
 Application
@@ -307,7 +307,7 @@ interface DatabaseDriver {
 3. Write tests
 4. Update documentation
 
-For a complete visual breakdown of how data flows through the system, check out the [detailed architecture documentation](docks/architecture.md).
+For a complete visual breakdown of how data flows through the system, check out the [detailed architecture documentation](Docks/ARCHITECTURE.md).
 
 This architecture ensures consistency across all databases while keeping each implementation isolated.
 
@@ -485,9 +485,9 @@ databridge/
 ├── dist/
 ├── tests/
 ├── examples/
-├── docks/
+├── Docks/
 │   ├── index.html
-│   ├── architecture.md
+│   ├── ARCHITECTURE.md
 │   ├── getting-started/
 │   ├── api/
 │   ├── guides/
