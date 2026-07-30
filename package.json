@@ -20,7 +20,7 @@
     "build": "tsc"
   },
   "bin": {
-    "databridge": "dist/bin/index.js"
+    "databridge": "dist/bin/databridge.js"
   },
   "keywords": [
     "database",

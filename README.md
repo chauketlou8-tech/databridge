@@ -267,65 +267,245 @@ const UserSchema = new Schema({
 
 ## Architecture
 
-DataBridge uses a driver-based architecture:
+DataBridge uses a clean, driver-based architecture:
 
 ```
 Application
      |
      v
-DataBridge API
+DataBridge Core
      |
-     +----------------+
-     |                |
- PostgreSQL        MongoDB
- Driver            Driver
-     |                |
-     v                v
- Database          Database
+     +----------------+----------------+----------------+
+     |                |                |                |
+     v                v                v                v
+PostgreSQL        MySQL          MongoDB         SQLite
+  Driver           Driver          Driver          Driver
+     |                |                |                |
+     v                v                v                v
+PostgreSQL        MySQL          MongoDB         SQLite
+ Database         Database        Database        Database
 ```
 
-Adding support for new databases is done by creating a new driver.
+Each database driver implements the same interface:
+
+```typescript
+interface DatabaseDriver {
+    connect(config: ConnectionConfig): Promise<void>;
+    disconnect(): Promise<void>;
+    create<T>(model: string, data: T): Promise<T>;
+    find<T>(model: string, query: Query): Promise<T[]>;
+    findOne<T>(model: string, query: Query): Promise<T | null>;
+    update<T>(model: string, filter: Query, data: Partial<T>): Promise<T>;
+    delete(model: string, query: Query): Promise<boolean>;
+}
+```
+
+### Adding a New Database
+
+1. Create a new directory under `src/drivers/`
+2. Implement the `DatabaseDriver` interface
+3. Write tests
+4. Update documentation
+
+This architecture ensures consistency across all databases while keeping each implementation isolated.
 
 ---
 
 ## Project Structure
 
 ```
-database-manager/
+databridge/
+│
+├── bin/
+│   └── databridge.ts
 │
 ├── src/
-│   └── index.ts
+│   ├── cli/
+│   │   ├── commands/
+│   │   ├── generators/
+│   │   ├── prompts/
+│   │   ├── utils/
+│   │   ├── index.ts
+│   │   └── cli.ts
+│   │
+│   ├── core/
+│   │   ├── DataBridge.ts
+│   │   ├── Database.ts
+│   │   ├── Connection.ts
+│   │   ├── Driver.ts
+│   │   ├── Model.ts
+│   │   ├── Collection.ts
+│   │   ├── Repository.ts
+│   │   ├── Transaction.ts
+│   │   └── index.ts
+│   │
+│   ├── drivers/
+│   │   ├── postgres/
+│   │   │   ├── PostgresConnection.ts
+│   │   │   ├── PostgresDriver.ts
+│   │   │   ├── PostgresModel.ts
+│   │   │   ├── PostgresQuery.ts
+│   │   │   ├── PostgresSchema.ts
+│   │   │   ├── PostgresTransaction.ts
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── mysql/
+│   │   │   ├── MysqlConnection.ts
+│   │   │   ├── MysqlDriver.ts
+│   │   │   ├── MysqlModel.ts
+│   │   │   ├── MysqlQuery.ts
+│   │   │   ├── MysqlSchema.ts
+│   │   │   ├── MysqlTransaction.ts
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── mongodb/
+│   │   │   ├── MongoConnection.ts
+│   │   │   ├── MongoDriver.ts
+│   │   │   ├── MongoModel.ts
+│   │   │   ├── MongoQuery.ts
+│   │   │   ├── MongoSchema.ts
+│   │   │   ├── MongoTransaction.ts
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── sqlite/
+│   │   │   ├── SqliteConnection.ts
+│   │   │   ├── SqliteDriver.ts
+│   │   │   ├── SqliteModel.ts
+│   │   │   ├── SqliteQuery.ts
+│   │   │   ├── SqliteSchema.ts
+│   │   │   ├── SqliteTransaction.ts
+│   │   │   └── index.ts
+│   │   │
+│   │   └── index.ts
+│   │
+│   ├── schema/
+│   │   ├── decorators/
+│   │   │   └── index.ts
+│   │   ├── fields/
+│   │   │   ├── BooleanField.ts
+│   │   │   ├── DateField.ts
+│   │   │   ├── NumberField.ts
+│   │   │   ├── ObjectField.ts
+│   │   │   ├── StringField.ts
+│   │   │   └── index.ts
+│   │   ├── validators/
+│   │   │   ├── Max.ts
+│   │   │   ├── Min.ts
+│   │   │   ├── Required.ts
+│   │   │   ├── Unique.ts
+│   │   │   └── index.ts
+│   │   ├── Field.ts
+│   │   ├── Schema.ts
+│   │   ├── Types.ts
+│   │   ├── Validator.ts
+│   │   └── index.ts
+│   │
+│   ├── query/
+│   │   ├── aggregation/
+│   │   │   └── index.ts
+│   │   ├── builder/
+│   │   │   ├── QueryBuilder.ts
+│   │   │   └── index.ts
+│   │   ├── filters/
+│   │   │   ├── Comparison.ts
+│   │   │   ├── Logical.ts
+│   │   │   └── index.ts
+│   │   ├── operators/
+│   │   │   ├── Comparison.ts
+│   │   │   ├── Logical.ts
+│   │   │   └── index.ts
+│   │   ├── Aggregate.ts
+│   │   ├── Filter.ts
+│   │   ├── Operators.ts
+│   │   ├── Populate.ts
+│   │   ├── Sort.ts
+│   │   └── index.ts
+│   │
+│   ├── model/
+│   │   ├── Document.ts
+│   │   ├── ModelFactory.ts
+│   │   ├── Repository.ts
+│   │   └── index.ts
+│   │
+│   ├── migrations/
+│   │   ├── Migration.ts
+│   │   ├── Migrator.ts
+│   │   ├── Seeder.ts
+│   │   └── index.ts
+│   │
+│   ├── plugins/
+│   │   ├── Plugin.ts
+│   │   ├── PluginManager.ts
+│   │   └── index.ts
+│   │
+│   ├── middleware/
+│   │   ├── BeforeCreate.ts
+│   │   ├── AfterCreate.ts
+│   │   ├── BeforeUpdate.ts
+│   │   ├── AfterUpdate.ts
+│   │   ├── BeforeDelete.ts
+│   │   ├── AfterDelete.ts
+│   │   └── index.ts
+│   │
+│   ├── exceptions/
+│   │   ├── ConnectionError.ts
+│   │   ├── DataBridgeError.ts
+│   │   ├── QueryError.ts
+│   │   ├── ValidationError.ts
+│   │   └── index.ts
+│   │
+│   ├── interfaces/
+│   │   ├── Connection.ts
+│   │   ├── Driver.ts
+│   │   ├── Model.ts
+│   │   ├── Query.ts
+│   │   └── index.ts
+│   │
+│   ├── types/
+│   │   ├── database.ts
+│   │   ├── model.ts
+│   │   ├── query.ts
+│   │   ├── schema.ts
+│   │   └── index.ts
+│   │
+│   ├── utils/
+│   │   ├── deepClone.ts
+│   │   ├── helpers.ts
+│   │   ├── logger.ts
+│   │   ├── merge.ts
+│   │   └── index.ts
+│   │
+│   ├── constants/
+│   │   ├── databases.ts
+│   │   ├── defaults.ts
+│   │   ├── operators.ts
+│   │   └── index.ts
+│   │
+│   ├── config/
+│   │   ├── defaults.ts
+│   │   ├── loader.ts
+│   │   └── index.ts
+│   │
+│   ├── index.ts
+│   └── version.ts
 │
-├── core/
-│   ├── Database.ts
-│   ├── Connection.ts
-│   ├── Model.ts
-│   └── Collection.ts
+├── dist/
+├── tests/
+├── examples/
+├── docs/
 │
-├── drivers/
-│   ├── postgres/
-│   │   └── PostgresDriver.ts
-│   ├── mysql/
-│   │   └── MysqlDriver.ts
-│   └── mongodb/
-│       └── MongoDriver.ts
-│
-├── schema/
-│   ├── Schema.ts
-│   ├── Field.ts
-│   └── Validator.ts
-│
-├── query/
-│   ├── QueryBuilder.ts
-│   └── Filter.ts
-│
-├── migrations/
-│
-├── cli/
-│
+├── .gitignore
+├── .npmignore
+├── .npmrc
 ├── package.json
+├── package-lock.json
 ├── tsconfig.json
-└── README.md
+├── README.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── DATABRIDGE_version
+└── LICENSE
 ```
 
 ### Core Modules
