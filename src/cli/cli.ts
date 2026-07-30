@@ -6,11 +6,12 @@
  * The CLI parses command-line arguments, validates them, and executes
  * the corresponding command logic.
  */
-import { version, help } from "./commands";
+import { version, help, init, connect } from "./commands";
 
-const [...args] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const command = args[0];
 
-switch (args[0]) {
+switch (command) {
     case "version":
         version();
         break;
@@ -18,10 +19,19 @@ switch (args[0]) {
     case "help":
         help();
         break;
-    default:
-        console.log(`Unknown command: "${args[0] ?? "No command entered"}"
 
-        To see a list of supported databridge commands, run:
-        databridge help`)
+    case "init":
+        init(args.slice(1));
         break;
+
+    case "connect":
+        connect(args.slice(1));
+        break;
+
+    default:
+        console.error(`Unknown command: "${command || "No command entered"}"`);
+        console.log();
+        console.log("To see a list of supported commands, run:");
+        console.log("  databridge help");
+        process.exit(1);
 }
