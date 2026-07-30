@@ -2,4 +2,4 @@
 
 'use strict';
 
-require("../dist/cli/databridge.js");
+import "../dist/cli/databridge.js";
