@@ -12,7 +12,7 @@
   },
   "license": "MIT",
   "author": "Tlou E Chauke <chauketlou8@gmail.com>",
-  "type": "module",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "test": "jest",
@@ -38,7 +38,8 @@
     "@types/jest": "30.0.0",
     "@types/node": "26.1.2",
     "jest": "30.4.2",
+    "ts-jest": "29.4.12",
     "tsx": "4.23.1",
-    "typescript": "7.0.2"
+    "typescript": "5.9.3"
   }
 }

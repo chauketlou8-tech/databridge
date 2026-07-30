@@ -8,7 +8,7 @@
  */
 import { version, help } from "./commands";
 
-const [...args] = process.argv.slice(3);
+const [...args] = process.argv.slice(2);
 
 switch (args[0]) {
     case "version":
