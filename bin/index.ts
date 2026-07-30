@@ -1,5 +1,5 @@
-#!
+#!/usr/bin/env node
 
 'use strict';
 
-//export { default } from "../"
+require("../dist/cli/index.js");

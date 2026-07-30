@@ -12,14 +12,15 @@
   },
   "license": "MIT",
   "author": "Tlou E Chauke <chauketlou8@gmail.com>",
-  "type": "module",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "deploy": "vercel --prod --cwd Docks"
+    "deploy": "vercel --prod --cwd Docks",
+    "build": "tsc"
   },
   "bin": {
-    "databridge": ""
+    "databridge": "dist/bin/index.js"
   },
   "keywords": [
     "database",
