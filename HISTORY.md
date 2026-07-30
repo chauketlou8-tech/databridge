@@ -39,3 +39,8 @@ This file provides a chronological history of the DataBridge project, documentin
     - index.ts - CLI exports
 - src/cli/commands - Commands for the cli
     - index.ts - commands entry point
+    - version.ts - version command
+    - help.ts - help command
+    ### Other files
+    - init.ts
+    - connect.ts
