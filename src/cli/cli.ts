@@ -1,5 +1,5 @@
 /**
- * CLI entry point for the DataBridge command-line interface.
+ * CLI entry point for the DataBridge command-line interfaces.
  *
  * Handles terminal commands and routes them to the appropriate handlers.
  *

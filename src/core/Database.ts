@@ -1,3 +1,8 @@
-export default class Database {
+import { Database as DB } from "../interfaces/Database";
 
+export default class Database implements DB {
+
+    constructor() {
+
+    }
 }
