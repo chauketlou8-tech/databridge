@@ -37,10 +37,11 @@ This file provides a chronological history of the DataBridge project, documentin
 - src/cli/ - Command-line interface
     - cli.ts - CLI entry point
     - index.ts - CLI exports
-- src/cli/commands - Commands for the cli
-    - index.ts - commands entry point
-    - version.ts - version command
-    - help.ts - help command
-    ### Other files
-    - init.ts
-    - connect.ts
+- src/cli/commands/ - CLI commands
+    - index.ts - Commands entry point
+    - version.ts - Version command
+    - help.ts - Help command
+    - init.ts - Init command
+    - connect.ts - Connect command
+- tests/ - Test files
+    - cli.test.ts - CLI tests
