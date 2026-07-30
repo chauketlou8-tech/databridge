@@ -578,6 +578,7 @@ Write once. Deploy anywhere.
 ## Tech Stack
 
 - TypeScript
+- Jest
 - Node.js
 - PostgreSQL
 - MySQL
