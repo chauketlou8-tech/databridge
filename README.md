@@ -321,10 +321,6 @@ databridge/
 │
 ├── src/
 │   ├── cli/
-│   │   ├── commands/
-│   │   ├── generators/
-│   │   ├── prompts/
-│   │   ├── utils/
 │   │   ├── index.ts
 │   │   └── cli.ts
 │   │
