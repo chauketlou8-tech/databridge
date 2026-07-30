@@ -39,3 +39,6 @@ This file provides a chronological history of the DataBridge project, documentin
     - index.ts - CLI exports
 - tests/ - Test files
     - cli.test.ts - CLI tests
+
+#### Documentation Added
+- ARCHITECTURE.md - Outline of the workflow of DataBridge

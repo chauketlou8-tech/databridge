@@ -423,11 +423,6 @@ databridge/
 │   │   ├── Repository.ts
 │   │   └── index.ts
 │   │
-│   ├── migrations/
-│   │   ├── Migration.ts
-│   │   ├── Migrator.ts
-│   │   ├── Seeder.ts
-│   │   └── index.ts
 │   │
 │   ├── plugins/
 │   │   ├── Plugin.ts
