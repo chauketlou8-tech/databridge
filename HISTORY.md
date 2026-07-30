@@ -37,6 +37,14 @@ This file provides a chronological history of the DataBridge project, documentin
 - src/cli/ - Command-line interface
     - cli.ts - CLI entry point
     - index.ts - CLI exports
+- src/core/ - Core functionality
+    - DataBridge.ts - Main DataBridge class
+    - Database.ts - Database class
+- src/interfaces/ - TypeScript interfaces
+    - DataBridge.ts - DataBridge interface
+    - Database.ts - Database interface
+- src/types/ - Type definitions
+    - config.ts - Configuration types
 - tests/ - Test files
     - cli.test.ts - CLI tests
 

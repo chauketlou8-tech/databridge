@@ -38,7 +38,8 @@ export class DataBridge implements DBD {
     public async connect(config: config): Promise<Database> {
         // TODO: Implement driver selection and connection logic
         // Currently returns a new Database instance
-        // Will be replaced with actual connection logic
+        if (!config.provider) {
+        }
         return new Database();
     }
 }
