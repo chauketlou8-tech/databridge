@@ -6,7 +6,7 @@
  * The CLI parses command-line arguments, validates them, and executes
  * the corresponding command logic.
  */
-import { version, help, init, connect } from "./commands";
+import { version, help } from "./commands";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -18,14 +18,6 @@ switch (command) {
 
     case "help":
         help();
-        break;
-
-    case "init":
-        init(args.slice(1));
-        break;
-
-    case "connect":
-        connect(args.slice(1));
         break;
 
     default:
