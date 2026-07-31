@@ -24,7 +24,7 @@ src/index.ts
 │
 │  Exports the public API
 │
-├──────────────► src/core/DataBridge.ts
+├──────────────► src/core/DataBridge.test.ts
 │
 └──────────────► src/schema/Schema.ts
                       │
@@ -42,7 +42,7 @@ When a developer imports DataBridge, they get access to the main `DataBridge` cl
 ## DataBridge.connect()
 
 ```
-src/core/DataBridge.ts
+src/core/DataBridge.test.ts
         │
         ▼
 src/config/

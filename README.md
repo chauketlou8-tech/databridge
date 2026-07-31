@@ -327,7 +327,7 @@ databridge/
 │   │   └── cli.ts
 │   │
 │   ├── core/
-│   │   ├── DataBridge.ts
+│   │   ├── DataBridge.test.ts
 │   │   ├── Database.ts
 │   │   ├── Connection.ts
 │   │   ├── Driver.ts

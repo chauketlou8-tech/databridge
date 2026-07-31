@@ -1,12 +1,13 @@
 /**
  * DataBridge - Main entry point for the database abstraction layer
  *
- * This class implements the DataBridge interfaces and provides
+ * This class implements the DataBridge interface and provides
  * the primary API for connecting to databases.
  */
 import Database from "./Database";
 import type { DataBridge as DBD } from "../interfaces/DataBridge";
-import type { config } from "../types/config"
+import type { Config } from "../types/config";
+import { ProviderError } from "../exceptions";
 
 export class DataBridge implements DBD {
 
@@ -25,6 +26,7 @@ export class DataBridge implements DBD {
      *
      * @returns Promise resolving to a Database instance
      *
+     * @throws {ProviderError} If provider is missing or invalid
      * @throws {Error} If connection fails
      *
      * @example
@@ -35,11 +37,25 @@ export class DataBridge implements DBD {
      * });
      * ```
      */
-    public async connect(config: config): Promise<Database> {
+    public async connect(config: Config): Promise<Database> {
+        // Validate provider
+        if (!config.provider) {
+            throw new ProviderError("No database provider was specified.","D001");
+        }
+
+        // TODO: Validate provider is supported
+        // const validProviders = ["postgres", "mysql", "mongodb", "sqlite"];
+        // if (!validProviders.includes(config.provider)) {
+        //     throw new ProviderError(
+        //         `Unsupported provider: ${config.provider}`,
+        //         "D002"
+        //     );
+        // }
+
         // TODO: Implement driver selection and connection logic
         // Currently returns a new Database instance
-        if (!config.provider) {
-        }
+        // Will be replaced with actual connection logic
+
         return new Database();
     }
 }

@@ -1,4 +1,4 @@
-export type config = {
+export type Config = {
     provider: string;
     url: string;
     host?: string;

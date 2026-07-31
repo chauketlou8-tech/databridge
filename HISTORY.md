@@ -38,10 +38,10 @@ This file provides a chronological history of the DataBridge project, documentin
     - cli.ts - CLI entry point
     - index.ts - CLI exports
 - src/core/ - Core functionality
-    - DataBridge.ts - Main DataBridge class
+    - DataBridge.test.ts - Main DataBridge class
     - Database.ts - Database class
 - src/interfaces/ - TypeScript interfaces
-    - DataBridge.ts - DataBridge interface
+    - DataBridge.test.ts - DataBridge interface
     - Database.ts - Database interface
 - src/types/ - Type definitions
     - config.ts - Configuration types
@@ -106,10 +106,10 @@ This file provides a chronological history of the DataBridge project, documentin
     - cli.ts - CLI entry point
     - index.ts - CLI exports
 - src/core/ - Core functionality
-    - DataBridge.ts - Main DataBridge class
+    - DataBridge.test.ts - Main DataBridge class
     - Database.ts - Database class
 - src/interfaces/ - TypeScript interfaces
-    - DataBridge.ts - DataBridge interface
+    - DataBridge.test.ts - DataBridge interface
     - Database.ts - Database interface
 - src/types/ - Type definitions
     - config.ts - Configuration types
