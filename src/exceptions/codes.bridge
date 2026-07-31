@@ -1,7 +1,7 @@
 // DataBridge Error Codes
 // ======================
 // Format: DXXX - Description - Explanation
-// Groups: 00x (Provider), 01x (Connection), 02x (Driver), 03x (Query), 04x (Schema), 05x (Model), 06x (Transaction)
+// Groups: 00x (Provider), 01x (Connection), 02x (Driver), 03x (Query), 04x (Schema), 05x (Model), 06x (Transaction), 08x (Special)
 
 // ===== Provider Errors (00x) =====
 // Errors related to database provider configuration and connection
@@ -21,8 +21,8 @@ D011 - Connection refused - The database server refused the connection
 D012 - Connection closed - The connection was unexpectedly closed or terminated
 D013 - Invalid connection URL - The connection URL format is invalid or malformed
 D014 - SSL/TLS error - SSL/TLS handshake failed or certificate validation error
-D015 - No Connection error - There is no connection established
-D016 - Connection Error - General Connection Error
+D015 - No connection - No connection is established to the database
+D016 - Connection error - General connection error
 
 // ===== Driver Errors (02x) =====
 // Errors related to database driver operations
@@ -32,7 +32,7 @@ D021 - Driver initialization failed - Failed to initialize the database driver
 D022 - Driver incompatible - The driver is not compatible with the current DataBridge version
 D023 - Driver version mismatch - The driver version does not match the required version
 D024 - Driver URL missing - The connection URL is missing or empty
-D025 - Driver Error - General Driver Error
+D025 - Driver error - General driver error
 
 // ===== Query Errors (03x) =====
 // Errors related to query building and execution
@@ -42,6 +42,8 @@ D031 - Query execution failed - The query execution failed due to an error
 D032 - Query timeout - The query execution exceeded the timeout limit
 D033 - Invalid query parameter - A parameter provided for the query is invalid
 D034 - Query result empty - The query returned no results
+D035 - Query not provided - The query is missing
+D036 - Query error - General query error
 
 // ===== Schema Errors (04x) =====
 // Errors related to schema definition and validation
@@ -51,7 +53,7 @@ D041 - Schema validation failed - The schema validation failed due to errors
 D042 - Schema migration failed - The schema migration process failed
 D043 - Schema already exists - The schema already exists in the database
 D044 - Schema not found - The schema could not be found in the database
-D045 - Schema Error - General Schema Error
+D045 - Schema error - General schema error
 
 // ===== Model Errors (05x) =====
 // Errors related to model operations
@@ -61,6 +63,7 @@ D051 - Model already exists - The model already exists in the database
 D052 - Invalid model definition - The model definition is invalid or malformed
 D053 - Model validation failed - The model validation failed due to errors
 D054 - Model creation failed - Failed to create the model
+D055 - Model error - General model error
 
 // ===== Transaction Errors (06x) =====
 // Errors related to transaction management
@@ -69,3 +72,9 @@ D060 - Transaction failed - The transaction failed to complete
 D061 - Transaction timeout - The transaction exceeded the timeout limit
 D062 - Transaction already started - A transaction is already in progress
 D063 - Transaction not started - No transaction has been started
+
+// ===== Special Errors (08x) =====
+// Errors that do not fall under any of the above categories
+
+D080 - Mismatch error - Mismatch between two or more things that should match
+D081 - Null error - Null value encountered where a value was expected

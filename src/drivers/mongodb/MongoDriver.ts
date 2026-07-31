@@ -1,8 +1,10 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
+import type { Query } from "../../types/query";
 import { ConnectionError, DriverError } from "../../exceptions"
 
 import { MongoClient, Db } from "mongodb";
+import MongoQuery from "./MongoQuery";
 
 export class MongoDriver extends Driver {
     private client: MongoClient | null;
@@ -40,11 +42,11 @@ export class MongoDriver extends Driver {
         console.log("disconnected...");
     }
 
-    public async query(sql: string): Promise<any> {
+    public async query(query: Query): Promise<any> {
         if (!this.db) {
             throw new ConnectionError("Not connected to database", "D015");
         }
-        // this one is complicated will add it later
-        //return await this.pool.query(sql);
+
+        await new MongoQuery(qyery).run();
     }
 }

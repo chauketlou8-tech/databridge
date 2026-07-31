@@ -8,14 +8,13 @@ export default abstract class Driver implements DRV {
         this.config = config;
     }
 
-    public async connect(config: Config): Promise<void> {
+    public abstract async connect(config: Config): Promise<void> {
     }
 
-    public async disconnect(): Promise<void> {
+    public abstract async disconnect(): Promise<void> {
 
     }
 
-    public async query(sql: string): Promise<any> {
-
+    public abstract async query(query: Query): Promise<void> {
     }
 }

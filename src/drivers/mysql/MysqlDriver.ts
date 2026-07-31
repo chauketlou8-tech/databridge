@@ -69,12 +69,12 @@ export class MysqlDriver extends Driver {
         }
     }
 
-    public async query(sql: string): Promise<any> {
+    public async query(data: unknown): Promise<any> {
         if (!this.connection) {
             throw new ConnectionError("Not connected to database", "D015");
         }
 
-        const [rows] = await this.connection.query(sql);
-        return rows;
+        // const [rows] = await this.connection.query(sql);
+        // return rows;
     }
 }

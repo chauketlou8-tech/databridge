@@ -64,10 +64,10 @@ export class PostgreSQLDriver extends Driver {
         console.log("disconnected...");
     }
 
-    public async query(sql: string): Promise<any> {
+    public async query(data: unknown): Promise<any> {
         if (!this.pool) {
             throw new ConnectionError("Not connected to database", "D015");
         }
-        return await this.pool.query(sql);
+        // return await this.pool.query(sql);
     }
 }

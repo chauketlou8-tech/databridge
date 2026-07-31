@@ -52,26 +52,21 @@ export class SQLiteDriver extends Driver {
         this.db = null;
     }
 
-    public async query(sql: string): Promise<any> {
+    public async query(data: unknown): Promise<any> {
         if (!this.db) {
-            throw new ConnectionError(
-                "Not connected to database",
-                "D015"
-            );
+            throw new ConnectionError("Not connected to database","D015");
         }
 
-        return new Promise((resolve, reject) => {
-            this.db!.all(sql, (err, rows) => {
-                if (err) {
-                    reject(
-                        new ConnectionError(
-                            `SQLite query failed: ${err.message}`
-                        )
-                    );
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+        // return new Promise((resolve, reject) => {
+        //     this.db!.all(sql, (err, rows) => {
+        //         if (err) {
+        //             reject(
+        //                 new ConnectionError(`SQLite query failed: ${err.message}`)
+        //             );
+        //         } else {
+        //             resolve(rows);
+        //         }
+        //     });
+        // });
     }
 }
