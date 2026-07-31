@@ -1,0 +1,7 @@
+// this file contains custom status codes for the databridge project
+
+D001 - ProviderError
+D002 - ConnectionError
+D003 - DriverError
+D004 - QueryError
+D005 - SchemaError
