@@ -1,6 +1,6 @@
 export type Config = {
     provider: string;
-    url: string;
+    url?: string;
     host?: string;
     user?: string;
     password?: string;
