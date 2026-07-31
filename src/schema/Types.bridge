@@ -1,0 +1,27 @@
+// DataBridge Supported Data Types
+// ================================
+// This file defines all data types that DataBridge supports for schema fields.
+
+// ===== Primitive Types =====
+// Basic data types for simple values
+
+STRING   - Text values - "hello world"
+NUMBER   - Numeric values - 42, 3.14
+BOOLEAN  - True or false values - true, false
+DATE     - Date and time values - 2026-07-31T00:00:00.000Z
+
+// ===== Complex Types =====
+// Data types for structured values
+
+OBJECT   - Key-value pair objects - { name: "John", age: 30 }
+ARRAY    - List of values - [1, 2, 3], ["a", "b", "c"]
+BUFFER   - Binary data - images, files, encrypted data
+
+// ===== Special Types =====
+// Specialized data types for specific use cases
+
+UUID     - Universally unique identifiers - 123e4567-e89b-12d3-a456-426614174000
+DECIMAL  - High-precision decimal numbers - 99.99, 0.0001
+ENUM     - Predefined text values - "RED", "GREEN", "BLUE"
+JSON     - JSON data - {"key": "value"}
+TEXT     - Long text content - Multi-paragraph content
