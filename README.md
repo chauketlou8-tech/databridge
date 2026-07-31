@@ -339,39 +339,23 @@ databridge/
 │   │
 │   ├── drivers/
 │   │   ├── postgres/
-│   │   │   ├── PostgresConnection.ts
 │   │   │   ├── PostgresDriver.ts
-│   │   │   ├── PostgresModel.ts
 │   │   │   ├── PostgresQuery.ts
-│   │   │   ├── PostgresSchema.ts
-│   │   │   ├── PostgresTransaction.ts
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── mysql/
-│   │   │   ├── MysqlConnection.ts
 │   │   │   ├── MysqlDriver.ts
-│   │   │   ├── MysqlModel.ts
 │   │   │   ├── MysqlQuery.ts
-│   │   │   ├── MysqlSchema.ts
-│   │   │   ├── MysqlTransaction.ts
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── mongodb/
-│   │   │   ├── MongoConnection.ts
 │   │   │   ├── MongoDriver.ts
-│   │   │   ├── MongoModel.ts
 │   │   │   ├── MongoQuery.ts
-│   │   │   ├── MongoSchema.ts
-│   │   │   ├── MongoTransaction.ts
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── sqlite/
-│   │   │   ├── SqliteConnection.ts
 │   │   │   ├── SqliteDriver.ts
-│   │   │   ├── SqliteModel.ts
 │   │   │   ├── SqliteQuery.ts
-│   │   │   ├── SqliteSchema.ts
-│   │   │   ├── SqliteTransaction.ts
 │   │   │   └── index.ts
 │   │   │
 │   │   └── index.ts
