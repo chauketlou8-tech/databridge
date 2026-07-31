@@ -1,47 +1,47 @@
-import type { DriverFactory as DRF } from "../interfaces/DriverFactory";
 import type { Driver } from "../interfaces/Driver";
 import type { Config } from "../types/config";
 import { ProviderError } from "../exceptions";
 
-class DriverFactory implements DRF {
-    private readonly provider: string;
-    private readonly config: Config;
+import { PostgreSQLDriver } from "./postgresql";
 
-    constructor(provider: string, config: Config) {
-        this.provider = provider;
-        this.config = config;
-    }
-
-    /**
-     * Creates a new DriverFactory instance
-     * @returns {DriverFactory} New DriverFactory instance
-     */
-    public create(): DriverFactory {
-        return new DriverFactory(this.provider, this.config);
-    }
-
+export default class DriverFactory {
     /**
      * Establishes a connection and returns a Driver instance
      * @returns {Promise<Driver>} Database driver instance
      * @throws {ProviderError} If provider is not supported
      */
-    public async connect(): Promise<null> {
+    public static createDriver(provider: string, config: Config): Promise<Driver> {
         // TODO: Implement connection logic for each provider
         // will add connection logic
 
-        if (!this.isProviderSupported()) {
-            throw new ProviderError(`Provider "${this.provider}" is not supported`, "D005");
+        if (!DriverFactory.isProviderSupported(provider)) {
+            throw new ProviderError(`Provider "${provider}" is not supported`, "D005");
         }
 
-        return null
-    }
+        let driver: any = "postgresql";
 
-    /**
-     * Checks if the provider is supported
-     * @returns {boolean} True if provider is supported
-     */
-    private isProviderSupported(): boolean {
+        switch (provider) {
+            case "postgres":
+                driver = new PostgreSQLDriver(config);
+                break;
+
+            case "mysql":
+                break;
+
+            case "mongodb":
+                break;
+
+            case "sqlite":
+                break;
+
+            default:
+                throw new ProviderError("There was an error with the provider.", "D006");
+        }
+
+        return driver;
+    }
+    private static isProviderSupported(provider: string): boolean {
         const supportedProviders = ["postgres", "mysql", "mongodb", "sqlite"];
-        return supportedProviders.includes(this.provider);
+        return supportedProviders.includes(provider);
     }
 }

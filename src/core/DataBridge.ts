@@ -7,6 +7,7 @@
 import Database from "./Database";
 import type { Config } from "../types/config";
 import { ProviderError } from "../exceptions";
+import DriverFactory from "../drivers/DriverFactory";
 
 export class DataBridge {
 
@@ -42,7 +43,9 @@ export class DataBridge {
             throw new ProviderError("No database provider was specified.","D001");
         }
 
-        // TODO: Validate provider is supported
+        const driver = await DriverFactory.createDriver(config.provider, config);
+
+        await driver.connect(config);
         // const validProviders = ["postgres", "mysql", "mongodb", "sqlite"];
         // if (!validProviders.includes(config.provider)) {
         //     throw new ProviderError(
@@ -55,6 +58,6 @@ export class DataBridge {
         // Currently returns a new Database instance
         // Will be replaced with actual connection logic
 
-        return new Database();
+        return new Database(driver);
     }
 }

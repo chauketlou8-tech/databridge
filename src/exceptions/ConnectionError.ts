@@ -1,10 +1,10 @@
-export default class ProviderError extends Error {
+export default class ConnectionError extends Error {
     private readonly statusCode: string;
 
-    constructor(message: string, statusCode: string = "D006") {
+    constructor(message: string, statusCode: string = "D015") {
         super(message);
         this.statusCode = statusCode;
-        this.name = "ProviderError";
+        this.name = "ConnectionError";
     }
 
     getStatusCode(): string {

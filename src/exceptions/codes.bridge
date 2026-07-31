@@ -11,7 +11,7 @@ D002 - Invalid provider - The specified provider is not a valid option for DataB
 D003 - Provider not supported - The provider is not currently supported by DataBridge
 D004 - Provider configuration missing - Required configuration options for the provider are missing
 D005 - Provider connection failed - Failed to establish a connection with the database provider
-D006 - General Driver Error
+D006 - Provider error - General provider error
 
 // ===== Connection Errors (01x) =====
 // Errors related to database connection management
@@ -21,6 +21,7 @@ D011 - Connection refused - The database server refused the connection
 D012 - Connection closed - The connection was unexpectedly closed or terminated
 D013 - Invalid connection URL - The connection URL format is invalid or malformed
 D014 - SSL/TLS error - SSL/TLS handshake failed or certificate validation error
+D015 - Connection Error - General Connection Error
 
 // ===== Driver Errors (02x) =====
 // Errors related to database driver operations
@@ -29,6 +30,8 @@ D020 - Driver not found - The required database driver could not be located
 D021 - Driver initialization failed - Failed to initialize the database driver
 D022 - Driver incompatible - The driver is not compatible with the current DataBridge version
 D023 - Driver version mismatch - The driver version does not match the required version
+D024 - Driver URL missing - The connection URL is missing or empty
+D025 - Driver Error - General Driver Error
 
 // ===== Query Errors (03x) =====
 // Errors related to query building and execution
