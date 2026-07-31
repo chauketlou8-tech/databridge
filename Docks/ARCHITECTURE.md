@@ -12,6 +12,180 @@ The architecture consists of three main layers:
 
 ---
 
+## UML Class Diagram
+
+```
++---------------------------+          +---------------------------+
+|      DataBridge           |          |        Schema             |
++---------------------------+          +---------------------------+
+| - config: Config          |          | - fields: Field[]         |
+| - driver: Driver          |          | - validators: Validator[] |
++---------------------------+          +---------------------------+
+| + connect(config):        |          | + validate(data): boolean |
+|   Promise<Database>       |          | + parse(data): object     |
+| + model(name, schema):    |          +---------------------------+
+|   Model                   |                     |
++---------------------------+                     |
+            |                                     |
+            | 1                                   |
+            v                                     |
++---------------------------+                     |
+|        Database           |                     |
++---------------------------+                     |
+| - driver: Driver          |                     |
+| - models: Map<string,     |                     |
+|   Model>                  |                     |
++---------------------------+                     |
+| + model(name, schema):    |                     |
+|   Model                   |                     |
+| + getDriver(): Driver     |                     |
++---------------------------+                     |
+            |                                     |
+            | 1                                   |
+            v                                     |
++---------------------------+                     |
+|         Model             |<--------------------+
++---------------------------+                     |
+| - name: string            |                     |
+| - schema: Schema          |                     |
+| - driver: Driver          |                     |
++---------------------------+                     |
+| + create(data): object    |                     |
+| + find(query): object[]   |                     |
+| + findOne(query): object  |                     |
+| + update(filter, data):   |                     |
+|   object                  |                     |
+| + delete(query): boolean  |                     |
++---------------------------+                     |
+            |                                     |
+            |                                     |
+            v                                     |
++---------------------------+                     |
+|        Driver             |                     |
++---------------------------+                     |
+| + connect(config): void   |                     |
+| + disconnect(): void      |                     |
+| + query(sql): any         |                     |
+| + create(model, data):    |                     |
+|   any                     |                     |
+| + find(model, query):     |                     |
+|   any[]                   |                     |
+| + update(model, filter,   |                     |
+|   data): any              |                     |
+| + delete(model, query):   |                     |
+|   boolean                 |                     |
++---------------------------+                     |
+            ^                                     |
+            |                                     |
+            |                                     |
++-----------+-----------+-----------+-------------+
+|           |           |           |             |
+v           v           v           v             |
++----------+ +----------+ +----------+ +----------+
+|PostgreSQL| |  MySQL   | | MongoDB  | | SQLite   |
+|  Driver  | |  Driver  | |  Driver  | |  Driver  |
++----------+ +----------+ +----------+ +----------+
+```
+
+---
+
+## Sequence Diagram: DataBridge.connect()
+
+```
+User          DataBridge        Config         DriverFactory       Driver          Database
+ |                |                |                |                |               |
+ |--connect(config)-->|            |                |                |               |
+ |                |--validate()-> |                |                |               |
+ |                |<--valid------|                |                |               |
+ |                |--create()------------------->|                |               |
+ |                |                |                |--new Driver->|               |
+ |                |                |                |<--Driver-----|               |
+ |                |                |                |--connect()---------------->|
+ |                |                |                |                |--connect()-->|
+ |                |                |                |                |<--connected-|
+ |                |                |                |<--connected---|               |
+ |                |<--Database----|                |                |               |
+ |<--db----------|                |                |                |               |
+```
+
+---
+
+## Sequence Diagram: Model Operations
+
+```
+User          Model          QueryBuilder          Driver          Database
+ |              |                |                    |               |
+ |--create(data)->|              |                    |               |
+ |              |--buildInsert()->|                    |               |
+ |              |<--query--------|                    |               |
+ |              |--execute(query)------------------->|               |
+ |              |                |                    |--execute()-->|
+ |              |                |                    |<--result-----|
+ |              |<--result-------|                    |               |
+ |<--object-----|                |                    |               |
+```
+
+---
+
+## Class Relationships
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              DataBridge                                     │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  + connect(config: Config): Promise<Database>                       │  │
+│  │  + model(name: string, schema: Schema): Model                      │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                             Database                                   │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  - driver: Driver                                               │  │  │
+│  │  │  - models: Map<string, Model>                                   │  │  │
+│  │  │  + model(name: string, schema: Schema): Model                  │  │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                              Model                                     │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  - name: string                                                 │  │  │
+│  │  │  - schema: Schema                                               │  │  │
+│  │  │  - driver: Driver                                               │  │  │
+│  │  │  + create(data: any): Promise<any>                              │  │  │
+│  │  │  + find(query: any): Promise<any[]>                             │  │  │
+│  │  │  + findOne(query: any): Promise<any>                            │  │  │
+│  │  │  + update(filter: any, data: any): Promise<any>                │  │  │
+│  │  │  + delete(query: any): Promise<boolean>                         │  │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                              Driver                                   │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  + connect(config: Config): Promise<void>                       │  │  │
+│  │  │  + disconnect(): Promise<void>                                  │  │  │
+│  │  │  + query(sql: string): Promise<any>                            │  │  │
+│  │  │  + create(model: string, data: any): Promise<any>              │  │  │
+│  │  │  + find(model: string, query: any): Promise<any[]>             │  │  │
+│  │  │  + update(model: string, filter: any, data: any): Promise<any> │  │  │
+│  │  │  + delete(model: string, query: any): Promise<boolean>         │  │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌──────────────┐ │
+│  │  PostgreSQL   │  │     MySQL     │  │    MongoDB    │  │    SQLite    │ │
+│  │    Driver     │  │    Driver     │  │    Driver     │  │    Driver    │ │
+│  └───────────────┘  └───────────────┘  └───────────────┘  └──────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Application Flow
 
 ```
@@ -24,7 +198,7 @@ src/index.ts
 │
 │  Exports the public API
 │
-├──────────────► src/core/DataBridge.test.ts
+├──────────────► src/core/DataBridge.ts
 │
 └──────────────► src/schema/Schema.ts
                       │
@@ -42,7 +216,7 @@ When a developer imports DataBridge, they get access to the main `DataBridge` cl
 ## DataBridge.connect()
 
 ```
-src/core/DataBridge.test.ts
+src/core/DataBridge.ts
         │
         ▼
 src/config/
