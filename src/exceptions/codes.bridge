@@ -21,7 +21,8 @@ D011 - Connection refused - The database server refused the connection
 D012 - Connection closed - The connection was unexpectedly closed or terminated
 D013 - Invalid connection URL - The connection URL format is invalid or malformed
 D014 - SSL/TLS error - SSL/TLS handshake failed or certificate validation error
-D015 - Connection Error - General Connection Error
+D015 - No Connection error - There is no connection established
+D016 - Connection Error - General Connection Error
 
 // ===== Driver Errors (02x) =====
 // Errors related to database driver operations

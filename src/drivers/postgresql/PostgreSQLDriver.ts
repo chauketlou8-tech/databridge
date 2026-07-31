@@ -9,6 +9,10 @@ export class PostgreSQLDriver extends Driver {
 
     constructor(config: Config) {
         super(config);
+        this.pool = new Pool({
+            connectionString: this.config.url,
+            host: this.config.host ?? "localhost"
+        });
     }
 
     public async connect(): Promise<void> {
@@ -17,24 +21,40 @@ export class PostgreSQLDriver extends Driver {
         }
 
         try {
-            const pool = new Pool({
-                connectionString: this.config.url,
-                host: this.config.host ?? "localhost"
-            });
-
-            // Extract database name from URL
-            // postgresql://user:password@localhost:5432/database
-            const match = this.config.url.match(/^postgres(?:ql)?:\/\/[^\/]+\/([^?]+)/);
-
-            if (match && match[1]) {
-                const dbName = match[1];
-                await pool.query(`create database ${dbName}`);
-            }
-
-            this.pool = pool;
+            // Test connection
+            await this.pool?.query("select 1");
         }
         catch (error) {
-            //console.log("Actual error:", error);
+            await this.pool?.end();
+
+            const match = this.config.url.match(/^postgres(?:ql)?:\/\/[^\/]+\/([^?]+)/);
+
+            if (match && match[1] && error && typeof error === "object" && "code" in error && error.code === "3D000") {
+                const dbName = match[1];
+
+                const adminUrl = this.config.url.replace(/\/([^/?]+)(\?.*)?$/,"/postgres$2");
+
+                const adminPool = new Pool({
+                    connectionString: adminUrl,
+                    host: this.config.host ?? "localhost"
+                });
+
+                try {
+                    await adminPool.query(`create database "${dbName}"`);
+                } finally {
+                    await adminPool.end();
+                }
+
+                this.pool = new Pool({
+                    connectionString: this.config.url,
+                    host: this.config.host ?? "localhost"
+                });
+
+                // Test connection again
+                await this.pool?.query("select 1");
+                return;
+            }
+
             throw new ConnectionError(`Failed to connect to PostgreSQL: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
@@ -42,5 +62,12 @@ export class PostgreSQLDriver extends Driver {
     public async disconnect(): Promise<void> {
         await this.pool?.end();
         console.log("disconnected...");
+    }
+
+    public async query(sql: string): Promise<any> {
+        if (!this.pool) {
+            throw new ConnectionError("Not connected to database", "D015");
+        }
+        return await this.pool.query(sql);
     }
 }

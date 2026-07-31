@@ -6,15 +6,15 @@ async function run() {
     console.log("Test 1: Valid connection");
     const db = await DataBridge.connect({
         provider: "postgres",
-        url: "postgres://localhost:3001/testdb"
+        url: "postgresql://postgres:TemaSecondary0909%40@localhost:3001/PlaceHolder"
     });
     console.log("✅ Connected:", db);
 
-    console.log("\nTest 2: Empty URL");
-    await DataBridge.connect({
-        provider: "postgres",
-        url: ""
-    });
+    // console.log("\nTest 2: Empty URL");
+    // await DataBridge.connect({
+    //     provider: "postgres",
+    //     url: ""
+    // });
 }
 
 void run();

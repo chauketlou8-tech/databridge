@@ -44,19 +44,7 @@ export class DataBridge {
         }
 
         const driver = await DriverFactory.createDriver(config.provider, config);
-
         await driver.connect(config);
-        // const validProviders = ["postgres", "mysql", "mongodb", "sqlite"];
-        // if (!validProviders.includes(config.provider)) {
-        //     throw new ProviderError(
-        //         `Unsupported provider: ${config.provider}`,
-        //         "D002"
-        //     );
-        // }
-
-        // TODO: Implement driver selection and connection logic
-        // Currently returns a new Database instance
-        // Will be replaced with actual connection logic
 
         return new Database(driver);
     }
