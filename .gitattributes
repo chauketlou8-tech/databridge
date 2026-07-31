@@ -1,1 +1,3 @@
 *.bridge linguist-language=Bridge
+*.bridge linguist-vendored
+*.bridge linguist-language=DataBridge
