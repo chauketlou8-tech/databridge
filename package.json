@@ -16,7 +16,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "test:manual": "tsx tests/manual/MongoDriver.test.ts",
+    "test:manual": "tsx tests/manual/MysqlDriver.test.ts",
     "deploy": "vercel --prod --cwd Docks",
     "build": "tsc"
   },
