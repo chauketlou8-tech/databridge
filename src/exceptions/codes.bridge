@@ -1,7 +1,66 @@
-// this file contains custom status codes for the databridge project
+// DataBridge Error Codes
+// ======================
+// Format: DXXX - Description - Explanation
+// Groups: 00x (Provider), 01x (Connection), 02x (Driver), 03x (Query), 04x (Schema), 05x (Model), 06x (Transaction)
 
-D001 - ProviderError
-D002 - ConnectionError
-D003 - DriverError
-D004 - QueryError
-D005 - SchemaError
+// ===== Provider Errors (00x) =====
+// Errors related to database provider configuration and connection
+
+D001 - Provider not specified - The database provider was not specified in the connection configuration
+D002 - Invalid provider - The specified provider is not a valid option for DataBridge
+D003 - Provider not supported - The provider is not currently supported by DataBridge
+D004 - Provider configuration missing - Required configuration options for the provider are missing
+D005 - Provider connection failed - Failed to establish a connection with the database provider
+D006 - General Driver Error
+
+// ===== Connection Errors (01x) =====
+// Errors related to database connection management
+
+D010 - Connection timeout - The connection attempt exceeded the timeout limit
+D011 - Connection refused - The database server refused the connection
+D012 - Connection closed - The connection was unexpectedly closed or terminated
+D013 - Invalid connection URL - The connection URL format is invalid or malformed
+D014 - SSL/TLS error - SSL/TLS handshake failed or certificate validation error
+
+// ===== Driver Errors (02x) =====
+// Errors related to database driver operations
+
+D020 - Driver not found - The required database driver could not be located
+D021 - Driver initialization failed - Failed to initialize the database driver
+D022 - Driver incompatible - The driver is not compatible with the current DataBridge version
+D023 - Driver version mismatch - The driver version does not match the required version
+
+// ===== Query Errors (03x) =====
+// Errors related to query building and execution
+
+D030 - Invalid query syntax - The query syntax is invalid or malformed
+D031 - Query execution failed - The query execution failed due to an error
+D032 - Query timeout - The query execution exceeded the timeout limit
+D033 - Invalid query parameter - A parameter provided for the query is invalid
+D034 - Query result empty - The query returned no results
+
+// ===== Schema Errors (04x) =====
+// Errors related to schema definition and validation
+
+D040 - Invalid schema definition - The schema definition is invalid or malformed
+D041 - Schema validation failed - The schema validation failed due to errors
+D042 - Schema migration failed - The schema migration process failed
+D043 - Schema already exists - The schema already exists in the database
+D044 - Schema not found - The schema could not be found in the database
+
+// ===== Model Errors (05x) =====
+// Errors related to model operations
+
+D050 - Model not found - The model could not be found
+D051 - Model already exists - The model already exists in the database
+D052 - Invalid model definition - The model definition is invalid or malformed
+D053 - Model validation failed - The model validation failed due to errors
+D054 - Model creation failed - Failed to create the model
+
+// ===== Transaction Errors (06x) =====
+// Errors related to transaction management
+
+D060 - Transaction failed - The transaction failed to complete
+D061 - Transaction timeout - The transaction exceeded the timeout limit
+D062 - Transaction already started - A transaction is already in progress
+D063 - Transaction not started - No transaction has been started

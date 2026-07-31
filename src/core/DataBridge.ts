@@ -5,11 +5,10 @@
  * the primary API for connecting to databases.
  */
 import Database from "./Database";
-import type { DataBridge as DBD } from "../interfaces/DataBridge";
 import type { Config } from "../types/config";
 import { ProviderError } from "../exceptions";
 
-export class DataBridge implements DBD {
+export class DataBridge {
 
     /**
      * Establishes a connection to a database
@@ -37,7 +36,7 @@ export class DataBridge implements DBD {
      * });
      * ```
      */
-    public async connect(config: Config): Promise<Database> {
+    public static async connect(config: Config): Promise<Database> {
         // Validate provider
         if (!config.provider) {
             throw new ProviderError("No database provider was specified.","D001");
