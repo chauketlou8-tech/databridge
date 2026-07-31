@@ -3,6 +3,9 @@ import type { Config } from "../types/config";
 import { ProviderError } from "../exceptions";
 
 import { PostgreSQLDriver } from "./postgresql";
+import { MongoDriver } from "./mongodb";
+import { MysqlDriver } from "./mysql";
+import { SQLiteDriver } from "./sqlite";
 
 export default class DriverFactory {
     /**
@@ -10,7 +13,7 @@ export default class DriverFactory {
      * @returns {Promise<Driver>} Database driver instance
      * @throws {ProviderError} If provider is not supported
      */
-    public static createDriver(provider: string, config: Config): Promise<Driver> {
+    public static createDriver(provider: string, config: Config): Driver {
         // TODO: Implement connection logic for each provider
         // will add connection logic
 
@@ -18,7 +21,7 @@ export default class DriverFactory {
             throw new ProviderError(`Provider "${provider}" is not supported`, "D005");
         }
 
-        let driver: any = "postgresql";
+        let driver: Driver;
 
         switch (provider) {
             case "postgres":
@@ -26,12 +29,15 @@ export default class DriverFactory {
                 break;
 
             case "mysql":
+                driver = new MysqlDriver(config);
                 break;
 
             case "mongodb":
+                driver = new MongoDriver(config);
                 break;
 
             case "sqlite":
+                driver = new SQLiteDriver(config);
                 break;
 
             default:

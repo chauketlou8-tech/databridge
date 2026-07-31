@@ -51,6 +51,7 @@ D041 - Schema validation failed - The schema validation failed due to errors
 D042 - Schema migration failed - The schema migration process failed
 D043 - Schema already exists - The schema already exists in the database
 D044 - Schema not found - The schema could not be found in the database
+D045 - Schema Error - General Schema Error
 
 // ===== Model Errors (05x) =====
 // Errors related to model operations

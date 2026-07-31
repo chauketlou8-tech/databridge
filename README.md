@@ -378,7 +378,7 @@ databridge/
 │   │   │   └── index.ts
 │   │   ├── Field.ts
 │   │   ├── Schema.ts
-│   │   ├── Types.ts
+│   │   ├── Types.bridge
 │   │   ├── Validator.ts
 │   │   └── index.ts
 │   │

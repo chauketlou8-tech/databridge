@@ -1,3 +1,5 @@
+import { Model } from "./Model";
+
 export interface Database {
-    // will put them later
+    model(name: string, Schema: Schema): Model;
 }

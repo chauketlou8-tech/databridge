@@ -43,7 +43,7 @@ export class DataBridge {
             throw new ProviderError("No database provider was specified.","D001");
         }
 
-        const driver = await DriverFactory.createDriver(config.provider, config);
+        const driver = DriverFactory.createDriver(config.provider, config);
         await driver.connect(config);
 
         return new Database(driver);

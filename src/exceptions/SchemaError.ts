@@ -1,5 +1,5 @@
-export class SchemaError extends Error {
-    private statusCode: string;
+export default class SchemaError extends Error {
+    private readonly statusCode: string;
 
     constructor(message: string, statusCode: string = "D045") {
         super(message);
