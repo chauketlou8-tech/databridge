@@ -1,6 +1,6 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
-import {ConnectionError, DriverError} from "../../exceptions"
+import { ConnectionError, DriverError } from "../../exceptions"
 
 import { MongoClient, Db } from "mongodb";
 
