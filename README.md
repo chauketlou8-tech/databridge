@@ -119,7 +119,7 @@ const db = await DataBridge.connect({
     url: "postgres://localhost:5432/myapp"
 });
 
-const User = db.model(
+const User = await db.model(
     "User",
     new Schema({
         name: String,
@@ -185,7 +185,7 @@ const db = await DataBridge.connect({
 ## Models
 
 ```typescript
-const Product = db.model(
+const Product = await db.model(
     "Product",
     new Schema({
         name: String,

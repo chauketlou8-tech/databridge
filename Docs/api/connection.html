@@ -51,10 +51,10 @@
         <p>Creates a new model for a collection or table.</p>
 
         <h3>Syntax</h3>
-        <pre><code>db.model(name: string, schema: Schema): Model</code></pre>
+        <pre><code>await db.model(name: string, schema: Schema): Model</code></pre>
 
         <h3>Example</h3>
-        <pre><code>const User = db.model("User", new Schema({
+        <pre><code>const User = await db.model("User", new Schema({
     name: String,
     email: String
 }));</code></pre>

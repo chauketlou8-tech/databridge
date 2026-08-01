@@ -34,7 +34,7 @@ const db = await DataBridge.connect({
 });</code></pre>
 
         <h2>Define a Model</h2>
-        <pre><code>const User = db.model("User", new Schema({
+        <pre><code>const User = await db.model("User", new Schema({
     name: String,
     email: String,
     age: Number
