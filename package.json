@@ -16,7 +16,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "test:manual": "tsx tests/manual/SQLiteDriver.test.ts",
+    "test:manual": "tsx tests/manual/PostgresQuery.test.ts",
     "deploy": "vercel --prod --cwd Docs",
     "build": "tsc"
   },

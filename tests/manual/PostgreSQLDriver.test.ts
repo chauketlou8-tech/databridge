@@ -6,7 +6,7 @@ async function run() {
     console.log("Test 1: Valid connection");
     const db = await DataBridge.connect({
         provider: "postgres",
-        url: "postgresql://postgres:TemaSecondary0909%40@localhost:3001/PlaceHolder"
+        url: "postgres://localhost:5432/testdb"
     });
     console.log("✅ Connected:", db);
 

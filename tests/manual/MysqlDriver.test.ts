@@ -8,13 +8,14 @@ async function run() {
         provider: "mysql",
         host: "localhost",
         user: "root",
-        password: "TemaSecondary0909@",
+        password: "password",
         database: "testdb"
     });
     await driver.connect();
     console.log("✅ Connected");
 
     console.log("\nTest 2: Execute query");
+    // @ts-ignore
     const result = await driver.query("select 1");
     console.log("✅ Query result:", result);
 

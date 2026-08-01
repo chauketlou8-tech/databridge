@@ -58,6 +58,7 @@ describe("MongoDriver", () => {
     describe("query", () => {
         it("should throw ConnectionError when not connected", async () => {
             const driver = new MongoDriver({ provider: "mongodb", url: "" });
+            // @ts-ignore
             await expect(driver.query("test")).rejects.toThrow(ConnectionError);
         });
     });

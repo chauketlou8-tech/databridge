@@ -97,6 +97,7 @@ describe("MysqlDriver", () => {
     describe("query", () => {
         it("should throw ConnectionError when not connected", async () => {
             const driver = new MysqlDriver({ provider: "mysql" });
+            // @ts-ignore
             await expect(driver.query("SELECT * FROM users")).rejects.toThrow(ConnectionError);
         });
 
@@ -109,6 +110,7 @@ describe("MysqlDriver", () => {
                 database: "testdb"
             });
             await driver.connect();
+            // @ts-ignore
             const result = await driver.query("SELECT 1");
             expect(result).toBeDefined();
         });

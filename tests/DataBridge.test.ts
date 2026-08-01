@@ -28,6 +28,7 @@ describe("DataBridge", () => {
                 url: "postgres://localhost:5432/test"
             };
 
+            // @ts-ignore
             const db = await databridge.connect(config);
             expect(db).toBeInstanceOf(Database);
         });
