@@ -1,6 +1,7 @@
 // DataBridge Supported Data Types
 // ================================
 // This file defines all data types that DataBridge supports for schema fields.
+// Format: TYPE - Description - Example
 
 // ===== Primitive Types =====
 // Basic data types for simple values

@@ -1,5 +1,5 @@
 import { Document } from "../model";
 
 export interface Model {
-    create({ data: unknown }): Document;
+    create(data: Record<string, unknown>): Document;
 }

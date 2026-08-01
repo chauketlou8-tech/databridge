@@ -1,7 +1,9 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
+import type { Query } from "../../types/query";
 import sqlite3, { Database } from "sqlite3";
 import { DriverError, ConnectionError } from "../../exceptions";
+import SqliteQuery from "./SqliteQuery";
 
 export class SQLiteDriver extends Driver {
     private db: Database | null = null;
@@ -52,21 +54,11 @@ export class SQLiteDriver extends Driver {
         this.db = null;
     }
 
-    public async query(data: unknown): Promise<any> {
+    public async query(query: Query): Promise<any> {
         if (!this.db) {
             throw new ConnectionError("Not connected to database","D015");
         }
 
-        // return new Promise((resolve, reject) => {
-        //     this.db!.all(sql, (err, rows) => {
-        //         if (err) {
-        //             reject(
-        //                 new ConnectionError(`SQLite query failed: ${err.message}`)
-        //             );
-        //         } else {
-        //             resolve(rows);
-        //         }
-        //     });
-        // });
+        return await new SqliteQuery(query, this.db).run();
     }
 }

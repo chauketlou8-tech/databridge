@@ -1,8 +1,9 @@
-import Driver from "../Driver"
+import Driver from "../Driver";
 import type { Config } from "../../types/config";
-import { DriverError, ConnectionError } from "../../exceptions"
-
+import type { Query } from "../../types/query";
+import { DriverError, ConnectionError } from "../../exceptions";
 import { Pool } from 'pg';
+import PostgresQuery from "./PostgresQuery";
 
 export class PostgreSQLDriver extends Driver {
     private pool: Pool | undefined;
@@ -64,10 +65,11 @@ export class PostgreSQLDriver extends Driver {
         console.log("disconnected...");
     }
 
-    public async query(data: unknown): Promise<any> {
+    public async query(query: Query): Promise<any> {
         if (!this.pool) {
             throw new ConnectionError("Not connected to database", "D015");
         }
-        // return await this.pool.query(sql);
+
+        return await new PostgresQuery(query, this.pool).run();
     }
 }

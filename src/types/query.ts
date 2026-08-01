@@ -1,4 +1,5 @@
 export type Query = {
     operation: string;
-    data?: unknown;
-}
+    type?: string;
+    data?: Record<string, unknown>;
+};
