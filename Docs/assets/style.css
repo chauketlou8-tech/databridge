@@ -354,9 +354,52 @@ footer {
     background: var(--bg);
     padding: 32px 0;
     border-top: 1px solid var(--border);
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 32px;
+}
+
+.footer-grid h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.footer-grid p {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.footer-grid ul {
+    list-style: none;
+}
+
+.footer-grid ul li {
+    margin-bottom: 4px;
+}
+
+.footer-grid ul a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.footer-grid ul a:hover {
+    color: var(--text);
+}
+
+.copyright {
     text-align: center;
     color: var(--text-secondary);
     font-size: 14px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
 }
 
 /* Responsive */
@@ -370,6 +413,10 @@ footer {
     }
     .db-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
     }
     .hero-text h1 {
         font-size: 36px;

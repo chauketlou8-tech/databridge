@@ -8,15 +8,15 @@
 </head>
 <body>
 
-<nav class="navbar">
-    <div class="nav-container">
-        <a href="index.html" class="nav-logo">DataBridge</a>
-        <div class="nav-links">
-            <a href="getting-started/installation.html">Docs</a>
-            <a href="api/connection.html">API</a>
-            <a href="guides/postgres.html">Guides</a>
-            <a href="https://github.com/chauketlou8-tech/databridge">GitHub</a>
-        </div>
+<nav>
+    <div class="container">
+        <a href="index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="getting-started/installation.html">Docs</a></li>
+            <li><a href="api/connection.html">API</a></li>
+            <li><a href="guides/postgres.html">Guides</a></li>
+            <li><a href="https://github.com/chauketlou8-tech/databridge">GitHub</a></li>
+        </ul>
     </div>
 </nav>
 
@@ -174,7 +174,7 @@ const users = await User.find();</code></pre>
 </footer>
 
 <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
+    document.getElementById('year').textContent = new Date().getFullYear().toString();
 </script>
 </body>
 </html>
