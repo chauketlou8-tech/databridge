@@ -1,6 +1,6 @@
 import type { Query } from "../../types/query";
 import { QueryError, SchemaError } from "../../exceptions";
-import BaseQuery from "../../utils/BaseQuery";
+import BaseQuery from "../BaseQuery";
 import { getMysqlType } from "./Types";
 
 /**
