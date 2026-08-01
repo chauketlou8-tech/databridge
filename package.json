@@ -23,6 +23,9 @@
   "bin": {
     "databridge": "dist/bin/databridge.js"
   },
+  "engines": {
+    "node": ">18.0.0 <=24.18.0"
+  },
   "keywords": [
     "database",
     "mysql",
