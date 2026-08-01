@@ -73,6 +73,17 @@ header {
     margin: 0 auto;
 }
 
+.badge {
+    display: inline-block;
+    background: #00d4ff22;
+    color: #00d4ff;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid #00d4ff44;
+    margin-bottom: 20px;
+}
+
 .hero h1 {
     color: #00d4ff;
     font-size: 48px;
@@ -127,12 +138,51 @@ header {
     transform: translateY(-2px);
 }
 
+.stats {
+    display: flex;
+    gap: 60px;
+    justify-content: center;
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 1px solid #00d4ff22;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat .number {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #00d4ff;
+}
+
+.stat .label {
+    font-size: 14px;
+    color: #8892b0;
+}
+
 section {
     padding: 60px 0;
 }
 
 .features {
     background: #0a0e17;
+}
+
+.section-title {
+    font-size: 32px;
+    text-align: center;
+    color: #00d4ff;
+    margin-bottom: 8px;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: #8892b0;
+    font-size: 18px;
+    margin-bottom: 40px;
 }
 
 .grid {
@@ -179,6 +229,12 @@ section {
     text-shadow: 0 0 30px #00d4ff33;
 }
 
+.example p {
+    text-align: center;
+    color: #8892b0;
+    margin-bottom: 24px;
+}
+
 pre {
     background: #0d1421;
     color: #c8d6e5;
@@ -194,6 +250,68 @@ code {
     font-family: 'SF Mono', 'Courier New', monospace;
 }
 
+.supported {
+    background: #0d1421;
+    padding: 60px 0;
+}
+
+.supported h2 {
+    text-align: center;
+    color: #00d4ff;
+    font-size: 32px;
+    margin-bottom: 40px;
+}
+
+.db-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+}
+
+.db-card {
+    background: #0a0e17;
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px solid #00d4ff22;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.db-card:hover {
+    border-color: #00d4ff66;
+    box-shadow: 0 0 30px #00d4ff1a;
+}
+
+.db-card h3 {
+    color: #00d4ff;
+    margin-bottom: 8px;
+}
+
+.db-card p {
+    color: #8892b0;
+    font-size: 14px;
+}
+
+.cta-section {
+    background: #0d1421;
+    padding: 60px 0;
+    text-align: center;
+    border-top: 1px solid #00d4ff22;
+    border-bottom: 1px solid #00d4ff22;
+}
+
+.cta-section h2 {
+    font-size: 32px;
+    color: #00d4ff;
+    margin-bottom: 12px;
+}
+
+.cta-section p {
+    color: #8892b0;
+    margin-bottom: 24px;
+    font-size: 18px;
+}
+
 footer {
     background: #0d1421;
     padding: 32px 0;
@@ -201,6 +319,50 @@ footer {
     text-align: center;
     color: #8892b0;
     font-size: 14px;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px;
+    margin-bottom: 40px;
+    text-align: left;
+}
+
+.footer-grid h4 {
+    color: #f0f6fc;
+    margin-bottom: 12px;
+}
+
+.footer-grid p {
+    color: #8892b0;
+    font-size: 14px;
+}
+
+.footer-grid ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-grid ul li {
+    margin-bottom: 8px;
+}
+
+.footer-grid ul a {
+    color: #8892b0;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s;
+}
+
+.footer-grid ul a:hover {
+    color: #00d4ff;
+}
+
+.copyright {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #00d4ff22;
 }
 
 /* Page layout */
@@ -287,7 +449,16 @@ body {
 .card:nth-child(4) { animation-delay: 0.4s; }
 .card:nth-child(5) { animation-delay: 0.5s; }
 .card:nth-child(6) { animation-delay: 0.6s; }
+.card:nth-child(7) { animation-delay: 0.7s; }
+.card:nth-child(8) { animation-delay: 0.8s; }
 
 .page .next {
     animation: fadeIn 0.8s ease-in-out 0.4s both;
+}
+
+/* Code block styles */
+pre code {
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-word;
 }

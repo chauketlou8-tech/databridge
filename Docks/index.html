@@ -14,6 +14,7 @@
             <li><a href="getting-started/installation.html">Getting Started</a></li>
             <li><a href="api/connection.html">API</a></li>
             <li><a href="guides/postgres.html">Guides</a></li>
+            <li><a href="api/error-codes.html">Error Codes</a></li>
             <li><a href="https://github.com/chauketlou8-tech/databridge">GitHub</a></li>
         </ul>
     </div>
@@ -22,11 +23,26 @@
 <header>
     <div class="container">
         <div class="hero">
-            <h1>DataBridge</h1>
-            <p>Unified database abstraction for the modern TypeScript era</p>
+            <div class="badge">v1.0.0-alpha</div>
+            <h1>One API for All Your Databases</h1>
+            <p>DataBridge is a modern, type-safe database abstraction layer that provides a unified API across SQL and NoSQL databases. Stop learning different query languages for every database.</p>
             <div class="buttons">
-                <a href="getting-started/installation.html" class="btn primary">Get Started</a>
+                <a href="getting-started/installation.html" class="btn primary">Get Started →</a>
                 <a href="https://github.com/chauketlou8-tech/databridge" class="btn secondary">View on GitHub</a>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <span class="number">4</span>
+                    <span class="label">Databases Supported</span>
+                </div>
+                <div class="stat">
+                    <span class="number">100%</span>
+                    <span class="label">TypeScript Coverage</span>
+                </div>
+                <div class="stat">
+                    <span class="number">35+</span>
+                    <span class="label">Error Codes</span>
+                </div>
             </div>
         </div>
     </div>
@@ -34,30 +50,40 @@
 
 <section class="features">
     <div class="container">
+        <h2 class="section-title">Why DataBridge?</h2>
+        <p class="section-subtitle">Stop switching between different database APIs. Start building.</p>
         <div class="grid">
             <div class="card">
                 <h3>Unified API</h3>
-                <p>One consistent interface across PostgreSQL, MySQL, MongoDB, and SQLite</p>
+                <p>One consistent interface across PostgreSQL, MySQL, MongoDB, and SQLite. Write once, deploy anywhere.</p>
             </div>
             <div class="card">
                 <h3>TypeScript First</h3>
-                <p>Full type safety with IntelliSense support for a better developer experience</p>
+                <p>Full type safety with IntelliSense support. Catch errors at compile time, not runtime.</p>
             </div>
             <div class="card">
-                <h3>Extensible</h3>
-                <p>Add any database with a simple driver interface</p>
+                <h3>Multiple Databases</h3>
+                <p>Support for PostgreSQL, MySQL, MongoDB, and SQLite out of the box. More coming soon.</p>
+            </div>
+            <div class="card">
+                <h3>Error Code System</h3>
+                <p>Standardized error codes for consistent error handling across all providers.</p>
             </div>
             <div class="card">
                 <h3>Schema Validation</h3>
-                <p>Define and validate your data structures with built-in validators</p>
+                <p>Define and validate your data structures with built-in validators. Keep your data clean.</p>
             </div>
             <div class="card">
-                <h3>Query Builder</h3>
-                <p>Fluent, database-agnostic query interface</p>
+                <h3>Model Support</h3>
+                <p>Create and manage models with full CRUD operations. Build your data layer with ease.</p>
             </div>
             <div class="card">
-                <h3>Migration System</h3>
-                <p>Version control for your database schema</p>
+                <h3>Fluent Query Builder</h3>
+                <p>Build complex queries with a database-agnostic fluent interface. No more vendor-specific syntax.</p>
+            </div>
+            <div class="card">
+                <h3>Extensible Drivers</h3>
+                <p>Add any database with a simple driver interface. Built-in support for the most popular databases.</p>
             </div>
         </div>
     </div>
@@ -66,32 +92,93 @@
 <section class="example">
     <div class="container">
         <h2>Quick Example</h2>
+        <p>Get started in 30 seconds with DataBridge.</p>
         <pre><code>import { DataBridge, Schema } from "databridge";
 
+// Connect to your database
 const db = await DataBridge.connect({
     provider: "postgres",
     url: "postgres://localhost:5432/myapp"
 });
 
+// Define your model
 const User = db.model("User", new Schema({
     name: String,
     email: String,
     age: Number
 }));
 
+// Create a record
 await User.create({
     name: "John",
     email: "john@example.com",
     age: 21
 });
 
-const users = await User.find();</code></pre>
+// Query records
+const users = await User.find();
+console.log(users);</code></pre>
+    </div>
+</section>
+
+<section class="supported">
+    <div class="container">
+        <h2>Supported Databases</h2>
+        <div class="db-grid">
+            <div class="db-card">
+                <h3>PostgreSQL</h3>
+                <p>Production-ready with full SQL support</p>
+            </div>
+            <div class="db-card">
+                <h3>MySQL</h3>
+                <p>The world's most popular open-source database</p>
+            </div>
+            <div class="db-card">
+                <h3>MongoDB</h3>
+                <p>Flexible NoSQL document database</p>
+            </div>
+            <div class="db-card">
+                <h3>SQLite</h3>
+                <p>Lightweight, embedded SQL database</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <div class="container">
+        <h2>Ready to build?</h2>
+        <p>Join developers using DataBridge to build better applications.</p>
+        <a href="getting-started/installation.html" class="btn primary">Install Now →</a>
     </div>
 </section>
 
 <footer>
     <div class="container">
-        <p>&copy; <span id="year"></span> DataBridge. MIT License</p>
+        <div class="footer-grid">
+            <div>
+                <h4>DataBridge</h4>
+                <p>Unified database abstraction for the modern TypeScript era.</p>
+            </div>
+            <div>
+                <h4>Links</h4>
+                <ul>
+                    <li><a href="getting-started/installation.html">Getting Started</a></li>
+                    <li><a href="api/connection.html">API Reference</a></li>
+                    <li><a href="guides/postgres.html">Guides</a></li>
+                    <li><a href="api/error-codes.html">Error Codes</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Community</h4>
+                <ul>
+                    <li><a href="https://github.com/chauketlou8-tech/databridge">GitHub</a></li>
+                    <li><a href="https://github.com/chauketlou8-tech/databridge/issues">Issues</a></li>
+                    <li><a href="https://github.com/chauketlou8-tech/databridge/blob/main/CONTRIBUTING.md">Contributing</a></li>
+                </ul>
+            </div>
+        </div>
+        <p class="copyright">&copy; <span id="year"></span> DataBridge. MIT License</p>
     </div>
 </footer>
 

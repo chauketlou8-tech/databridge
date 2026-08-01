@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Types - DataBridge API</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="../index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="../getting-started/installation.html">Getting Started</a></li>
+            <li><a href="connection.html">API</a></li>
+            <li><a href="../guides/postgres.html">Guides</a></li>
+            <li><a href="error-codes.html">Error Codes</a></li>
+            <li><a href="https://github.com/chauketlou8-tech/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="container">
+        <h1>Data Types</h1>
+        <p>DataBridge supports a wide range of data types for schema definitions.</p>
+
+        <h2>Primitive Types</h2>
+        <pre><code>STRING   - Text values - "hello world"
+NUMBER   - Numeric values - 42, 3.14
+BOOLEAN  - True or false values - true, false
+DATE     - Date and time values - 2026-07-31T00:00:00.000Z</code></pre>
+
+        <h2>Complex Types</h2>
+        <pre><code>OBJECT   - Key-value pair objects - { name: "John", age: 30 }
+ARRAY    - List of values - [1, 2, 3], ["a", "b", "c"]
+BUFFER   - Binary data - images, files, encrypted data</code></pre>
+
+        <h2>Special Types</h2>
+        <pre><code>UUID     - Universally unique identifiers - 123e4567-e89b-12d3-a456-426614174000
+DECIMAL  - High-precision decimal numbers - 99.99, 0.0001
+ENUM     - Predefined text values - "RED", "GREEN", "BLUE"
+JSON     - JSON data - {"key": "value"}
+TEXT     - Long text content - Multi-paragraph content</code></pre>
+
+        <h2>Auto Types</h2>
+        <pre><code>ID       - Auto-generated identifier
+CREATED_AT - Auto-populated creation timestamp
+UPDATED_AT - Auto-populated update timestamp</code></pre>
+
+        <h2>Reference Types</h2>
+        <pre><code>REFERENCE - Reference to another model - User.id
+RELATION  - One-to-many or many-to-many relationship</code></pre>
+
+        <div class="next">
+            <a href="error-codes.html">← Previous: Error Codes</a>
+            <a href="../guides/postgres.html">Next: Guides →</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; <span id="year"></span> DataBridge. MIT License</p>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const year = document.getElementById('year');
+        if (year) {
+            year.textContent = new Date().getFullYear().toString();
+        }
+    });
+</script>
+</body>
+</html>

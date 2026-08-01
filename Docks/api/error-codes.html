@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Codes - DataBridge API</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav>
+    <div class="container">
+        <a href="../index.html" class="logo">DataBridge</a>
+        <ul>
+            <li><a href="../getting-started/installation.html">Getting Started</a></li>
+            <li><a href="connection.html">API</a></li>
+            <li><a href="../guides/postgres.html">Guides</a></li>
+            <li><a href="error-codes.html">Error Codes</a></li>
+            <li><a href="https://github.com/chauketlou8-tech/databridge">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="container">
+        <h1>Error Codes</h1>
+        <p>DataBridge uses a standardized error code system to provide consistent error handling across all database providers.</p>
+
+        <h2>Provider Errors (00x)</h2>
+        <pre><code>D001 - Provider not specified
+D002 - Invalid provider
+D003 - Provider not supported
+D004 - Provider configuration missing
+D005 - Provider connection failed
+D006 - Provider error</code></pre>
+
+        <h2>Connection Errors (01x)</h2>
+        <pre><code>D010 - Connection timeout
+D011 - Connection refused
+D012 - Connection closed
+D013 - Invalid connection URL
+D014 - SSL/TLS error
+D015 - No connection
+D016 - Connection error</code></pre>
+
+        <h2>Driver Errors (02x)</h2>
+        <pre><code>D020 - Driver not found
+D021 - Driver initialization failed
+D022 - Driver incompatible
+D023 - Driver version mismatch
+D024 - Driver URL missing
+D025 - Driver error</code></pre>
+
+        <h2>Query Errors (03x)</h2>
+        <pre><code>D030 - Invalid query syntax
+D031 - Query execution failed
+D032 - Query timeout
+D033 - Invalid query parameter
+D034 - Query result empty
+D035 - Query not provided
+D036 - Query error</code></pre>
+
+        <h2>Schema Errors (04x)</h2>
+        <pre><code>D040 - Invalid schema definition
+D041 - Schema validation failed
+D042 - Schema migration failed
+D043 - Schema already exists
+D044 - Schema not found
+D045 - Schema error</code></pre>
+
+        <h2>Model Errors (05x)</h2>
+        <pre><code>D050 - Model not found
+D051 - Model already exists
+D052 - Invalid model definition
+D053 - Model validation failed
+D054 - Model creation failed
+D055 - Model error</code></pre>
+
+        <h2>Transaction Errors (06x)</h2>
+        <pre><code>D060 - Transaction failed
+D061 - Transaction timeout
+D062 - Transaction already started
+D063 - Transaction not started</code></pre>
+
+        <h2>Special Errors (08x)</h2>
+        <pre><code>D080 - Mismatch error
+D081 - Null error</code></pre>
+
+        <div class="next">
+            <a href="connection.html">← Previous: Connection</a>
+            <a href="../guides/postgres.html">Next: Guides →</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; <span id="year"></span> DataBridge. MIT License</p>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const year = document.getElementById('year');
+        if (year) {
+            year.textContent = new Date().getFullYear().toString();
+        }
+    });
+</script>
+</body>
+</html>
