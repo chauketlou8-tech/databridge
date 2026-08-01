@@ -17,7 +17,7 @@
   "scripts": {
     "test": "jest",
     "test:manual": "tsx tests/manual/SQLiteDriver.test.ts",
-    "deploy": "vercel --prod --cwd Docks",
+    "deploy": "vercel --prod --cwd Docs",
     "build": "tsc"
   },
   "bin": {
