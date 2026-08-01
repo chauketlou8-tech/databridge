@@ -15,6 +15,10 @@ export default class Database implements DB {
         return ModelFactory.createModel(name, Schema, this.driver);
     }
 
+    public async close(): Promise<void> {
+        return await this.driver.disconnect();
+    }
+
     getDriver(): Driver {
         return this.driver;
     }

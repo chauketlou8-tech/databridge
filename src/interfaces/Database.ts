@@ -3,4 +3,5 @@ import { Schema } from "../schema";
 
 export interface Database {
     model(name: string, Schema: Schema): Promise<Model>;
+    close(): Promise<void>;
 }
