@@ -64,28 +64,31 @@ Think of it as Mongoose for everything — but without the vendor lock-in.
 
 | Feature                   | Status        |
 |---------------------------|---------------|
-| Unified Connection API    | Planned       |
-| Multi-Database Support    | In Progress   |
-| Model-Based Data Access   | Planned       |
-| Schema Validation         | Planned       |
-| Full CRUD Operations      | Planned       |
-| Query Abstraction         | Planned       |
-| TypeScript-First          | Designed      |
-| Extensible Drivers        | Architecture  |
+| Unified Connection API    | Completed     |
+| Multi-Database Support    | Completed     |
+| Model-Based Data Access   | Completed     |
+| Schema Validation         | Completed     |
+| Full CRUD Operations      | Completed     |
+| Query Abstraction         | In Progress   |
+| TypeScript-First          | Completed     |
+| Extensible Drivers        | Completed     |
 | Connection Pooling        | Planned       |
 | Transaction Support       | Planned       |
 | Migration System          | Planned       |
+| CLI Tools                 | In Progress   |
+| IntelliJ Plugin           | In Progress   |
+| Error Code System         | Completed     |
 
 ---
 
 ## Supported Databases
 
-| Database    | Status          |
-|-------------|-----------------|
-| PostgreSQL  | In Development  |
-| MySQL       | Planned         |
-| MongoDB     | Planned         |
-| SQLite      | Planned         |
+| Database    | Status      |
+|-------------|-------------|
+| PostgreSQL  | Completed   |
+| MySQL       | Completed   |
+| MongoDB     | Completed   |
+| SQLite      | Completed   |
 
 ---
 
@@ -327,148 +330,83 @@ databridge/
 │   │   └── cli.ts
 │   │
 │   ├── core/
-│   │   ├── DataBridge.test.ts
+│   │   ├── DataBridge.ts
 │   │   ├── Database.ts
-│   │   ├── Connection.ts
-│   │   ├── Driver.ts
-│   │   ├── Model.ts
-│   │   ├── Collection.ts
-│   │   ├── Repository.ts
-│   │   ├── Transaction.ts
 │   │   └── index.ts
 │   │
 │   ├── drivers/
-│   │   ├── postgres/
-│   │   │   ├── PostgresDriver.ts
+│   │   ├── postgresql/
+│   │   │   ├── PostgreSQLDriver.ts
 │   │   │   ├── PostgresQuery.ts
+│   │   │   ├── Types.ts
 │   │   │   └── index.ts
-│   │   │
 │   │   ├── mysql/
 │   │   │   ├── MysqlDriver.ts
 │   │   │   ├── MysqlQuery.ts
+│   │   │   ├── Types.ts
 │   │   │   └── index.ts
-│   │   │
 │   │   ├── mongodb/
 │   │   │   ├── MongoDriver.ts
 │   │   │   ├── MongoQuery.ts
+│   │   │   ├── Types.ts
 │   │   │   └── index.ts
-│   │   │
 │   │   ├── sqlite/
-│   │   │   ├── SqliteDriver.ts
+│   │   │   ├── SQLiteDriver.ts
 │   │   │   ├── SqliteQuery.ts
+│   │   │   ├── Types.ts
 │   │   │   └── index.ts
-│   │   │
-│   │   └── index.ts
-│   │
-│   ├── schema/
-│   │   ├── decorators/
-│   │   │   └── index.ts
-│   │   ├── fields/
-│   │   │   ├── BooleanField.ts
-│   │   │   ├── DateField.ts
-│   │   │   ├── NumberField.ts
-│   │   │   ├── ObjectField.ts
-│   │   │   ├── StringField.ts
-│   │   │   └── index.ts
-│   │   ├── validators/
-│   │   │   ├── Max.ts
-│   │   │   ├── Min.ts
-│   │   │   ├── Required.ts
-│   │   │   ├── Unique.ts
-│   │   │   └── index.ts
-│   │   ├── Field.ts
-│   │   ├── Schema.ts
-│   │   ├── Types.bridge
-│   │   ├── Validator.ts
-│   │   └── index.ts
-│   │
-│   ├── query/
-│   │   ├── aggregation/
-│   │   │   └── index.ts
-│   │   ├── builder/
-│   │   │   ├── QueryBuilder.ts
-│   │   │   └── index.ts
-│   │   ├── filters/
-│   │   │   ├── Comparison.ts
-│   │   │   ├── Logical.ts
-│   │   │   └── index.ts
-│   │   ├── operators/
-│   │   │   ├── Comparison.ts
-│   │   │   ├── Logical.ts
-│   │   │   └── index.ts
-│   │   ├── Aggregate.ts
-│   │   ├── Filter.ts
-│   │   ├── Operators.ts
-│   │   ├── Populate.ts
-│   │   ├── Sort.ts
-│   │   └── index.ts
-│   │
-│   ├── model/
-│   │   ├── Document.ts
-│   │   ├── ModelFactory.ts
-│   │   ├── Repository.ts
-│   │   └── index.ts
-│   │
-│   │
-│   ├── plugins/
-│   │   ├── Plugin.ts
-│   │   ├── PluginManager.ts
-│   │   └── index.ts
-│   │
-│   ├── middleware/
-│   │   ├── BeforeCreate.ts
-│   │   ├── AfterCreate.ts
-│   │   ├── BeforeUpdate.ts
-│   │   ├── AfterUpdate.ts
-│   │   ├── BeforeDelete.ts
-│   │   ├── AfterDelete.ts
+│   │   ├── Driver.ts
+│   │   ├── DriverFactory.ts
 │   │   └── index.ts
 │   │
 │   ├── exceptions/
 │   │   ├── ConnectionError.ts
-│   │   ├── DataBridgeError.ts
+│   │   ├── DriverError.ts
+│   │   ├── ModelError.ts
+│   │   ├── ProviderError.ts
 │   │   ├── QueryError.ts
-│   │   ├── ValidationError.ts
+│   │   ├── SchemaError.ts
+│   │   ├── MisMatchError.ts
+│   │   ├── codes.bridge
 │   │   └── index.ts
 │   │
 │   ├── interfaces/
-│   │   ├── Connection.ts
+│   │   ├── Database.ts
 │   │   ├── Driver.ts
+│   │   ├── DriverFactory.ts
 │   │   ├── Model.ts
-│   │   ├── Query.ts
+│   │   └── index.ts
+│   │
+│   ├── model/
+│   │   ├── Document.ts
+│   │   ├── Model.ts
+│   │   ├── ModelFactory.ts
+│   │   └── index.ts
+│   │
+│   ├── schema/
+│   │   ├── Field.ts
+│   │   ├── Schema.ts
+│   │   ├── Types.bridge
+│   │   ├── Types.ts
 │   │   └── index.ts
 │   │
 │   ├── types/
-│   │   ├── database.ts
-│   │   ├── model.ts
+│   │   ├── config.ts
 │   │   ├── query.ts
-│   │   ├── schema.ts
 │   │   └── index.ts
 │   │
 │   ├── utils/
-│   │   ├── deepClone.ts
-│   │   ├── helpers.ts
-│   │   ├── logger.ts
-│   │   ├── merge.ts
-│   │   └── index.ts
-│   │
-│   ├── constants/
-│   │   ├── databases.ts
-│   │   ├── defaults.ts
-│   │   ├── operators.ts
-│   │   └── index.ts
-│   │
-│   ├── config/
-│   │   ├── defaults.ts
-│   │   ├── loader.ts
-│   │   └── index.ts
+│   │   └── BaseQuery.ts
 │   │
 │   ├── index.ts
 │   └── version.ts
 │
-├── dist/
 ├── tests/
-├── examples/
+│   ├── PostgreSQLDriver.test.ts
+│   ├── manual/
+│   │   └── PostgreSQLDriver.test.ts
+│   └── helpers/
+│
 ├── Docks/
 │   ├── index.html
 │   ├── ARCHITECTURE.md
@@ -487,34 +425,37 @@ databridge/
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── SECURITY.md
-├── DATABRIDGE_version
+├── HISTORY.md
 └── LICENSE
 ```
 
 ### Core Modules
 
 - **core/** - Foundation classes for database management
-    - `Database.ts` - Main database interface
-    - `Connection.ts` - Connection management
-    - `Model.ts` - Data model definitions
-    - `Collection.ts` - Collection/table operations
+    - `DataBridge.ts` - Main entry point
+    - `Database.ts` - Database interface
 
 - **drivers/** - Database-specific implementations
-    - Each database has its own driver that implements the unified API
-    - New databases can be added by creating a new driver
+    - `Driver.ts` - Abstract base driver class
+    - `DriverFactory.ts` - Factory for creating drivers
+    - Each database has its own driver, query handler, and type mappings
+
+- **exceptions/** - Error classes for DataBridge
+    - All errors extend from base DataBridgeError
+    - Error codes defined in `codes.bridge`
+
+- **model/** - Model and Document classes
+    - `Model.ts` - Model class with CRUD operations
+    - `ModelFactory.ts` - Factory for creating models
+    - `Document.ts` - Document class for data records
 
 - **schema/** - Schema definition and validation
-    - `Schema.ts` - Schema definitions
-    - `Field.ts` - Field type definitions
-    - `Validator.ts` - Validation logic
+    - `Schema.ts` - Schema definition
+    - `Field.ts` - Field validation and type normalization
+    - `Types.ts` - DataBridge type definitions
 
-- **query/** - Query building
-    - `QueryBuilder.ts` - Fluent query interface
-    - `Filter.ts` - Filter operations
-
-- **migrations/** - Database migration system
-- **cli/** - Command-line tools
-- **src/** - Entry point
+- **utils/** - Utility classes
+    - `BaseQuery.ts` - Shared query logic for all drivers
 
 ---
 
@@ -522,17 +463,17 @@ databridge/
 
 ### v0.1.0
 
-- [ ] Database connection manager
-- [ ] PostgreSQL support
-- [ ] Basic CRUD operations
-- [ ] Query builder
+- [x] Database connection manager
+- [x] PostgreSQL support
+- [x] Basic CRUD operations
+- [x] Query builder
 
 ### v0.2.0
 
-- [ ] MySQL support
-- [ ] MongoDB support
-- [ ] Schema validation
-- [ ] Type-safe models
+- [x] MySQL support
+- [x] MongoDB support
+- [x] Schema validation
+- [x] Type-safe models
 
 ### v0.3.0
 
@@ -581,7 +522,7 @@ MIT
 Contributions welcome!
 
 ```bash
-git clone https://github.com/yourusername/databridge.git
+git clone https://github.com/chauketlou8-tech/databridge.git
 npm install
 npm run build
 npm test
