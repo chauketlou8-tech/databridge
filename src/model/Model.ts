@@ -1,31 +1,13 @@
 import { Schema } from "../schema";
 import { Document } from "./Document";
-import { ModelError } from "../exceptions";
+import { ModelError, SchemaError } from "../exceptions";
 import { MisMatchError } from "../exceptions/MisMatchError";
 import type { Driver } from "../interfaces/Driver";
 import type { Query } from "../types/query";
 
-/**
- * Model {
- *   name: 'User',
- *   schema: Schema {
- *     fields: [
- *       { field: 'name', type: 'STRING' },
- *       { field: 'email', type: 'STRING' },
- *       { field: 'age', type: 'NUMBER' }
- *     ]
- *   },
- *   create: [Function: create],
- *   find: [Function: find],
- *   findOne: [Function: findOne],
- *   update: [Function: update],
- *   delete: [Function: delete],
- *   query: [Function: query]
- * }
- */
 export class Model {
     private readonly name: string;
-    private Schema: Schema;
+    private readonly Schema: Schema;
     private driver: Driver;
 
     constructor(name: string, Schema: Schema, driver: Driver) {
@@ -34,7 +16,7 @@ export class Model {
         this.driver = driver;
     }
 
-    public create(data: Record<string, unknown>): Document {
+    public async create(data: Record<string, unknown>): Promise<Document> {
         // Check all schema fields exist
         if (!this.Schema.fields.every(field => data.hasOwnProperty(field.field))) {
             throw new ModelError("The model definition is invalid or malformed","D052");
@@ -89,20 +71,37 @@ export class Model {
             }
         }
 
-        void this.make();
+        const createQuery: Query = {
+            operation: "create",
+            type: "object",
+            data: {
+                name: this.name,
+                data
+            }
+        }
+
+        await this.driver.query(createQuery);
 
         return new Document(data);
     }
 
-    public async make() {
-        const query: Query = {
+    public static async make(Schema: Schema, driver: Driver, name: string) {
+        if (!Schema) {
+            throw new SchemaError(`Schema is missing or is of wrong type","D045");`)
+        }
+
+        if (!name) {
+            throw new SchemaError("Model name is missing", "D045");
+        }
+
+        const modelQuery: Query = {
             operation: "create",
             type: "model",
             data: {
-                name: this.name,
-                Schema
+                name: name,
+                Schema: Schema,
             }
         }
-        await this.driver.query(query)
+        await driver.query(modelQuery);
     }
 }

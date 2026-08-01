@@ -15,6 +15,7 @@ export default abstract class BaseQuery {
 
     protected constructor(query: Query) {
         this.query = query;
+        this.operation = this.query.operation;
         this.fields = {};
     }
 
@@ -39,7 +40,7 @@ export default abstract class BaseQuery {
             throw new SchemaError("The schema definition is invalid or malformed", "D040");
         }
 
-        this.operation = this.query.operation;
+
         this.data = this.query.data;
 
         // Build database schema from DataBridge schema

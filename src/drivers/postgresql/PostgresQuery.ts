@@ -31,21 +31,28 @@ export default class PostgresQuery extends BaseQuery {
         try {
             await this.read();
 
+            const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+            if (!VALID_IDENTIFIER.test(this.data!.name as string)) {
+                throw new ModelError("Invalid model name", "D056");
+            }
+
+            const tableName: string = (this.data!.name as string);
+
             switch (this.operation) {
                 case "create":
                     switch (this.query.type) {
                         case "model":
                             // Check if table already exists
-                            const tables = await this.connection.query(`select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`, [this.data?.name]);
-
+                            const tables = await this.connection.query(`select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`, [tableName]);
                             if (tables.rows && tables.rows.length > 0) {
-                                throw new SchemaError(`Table "${this.data?.name}" already exists`, "D043");
+                                throw new SchemaError(`Table "${tableName}" already exists`, "D043");
                             }
 
                             // Build CREATE TABLE query
-                            const columns = Object.entries(this.fields).map(([field, type]) => `${field} ${type}`).join(",\n  ");
+                            const columns = Object.entries(this.fields).map(([field, type]) => `${field} ${type}`).join(",\n");
 
-                            const createTableSQL = `create table if not exists ${this.data?.name} (id serial primary key, ${columns})`;
+                            const createTableSQL = `create table if not exists "${tableName}" (id serial primary key, ${columns})`;
 
                             await this.connection.query(createTableSQL);
                             break;

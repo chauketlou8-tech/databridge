@@ -10,7 +10,8 @@ export default class Database implements DB {
         this.driver = driver;
     }
 
-    public model(name: string, Schema: Schema): Model {
+    public async model(name: string, Schema: Schema): Promise<Model> {
+        await Model.make(Schema, this.driver, name)
         return ModelFactory.createModel(name, Schema, this.driver);
     }
 

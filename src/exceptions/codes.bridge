@@ -53,7 +53,8 @@ D041 - Schema validation failed - The schema validation failed due to errors
 D042 - Schema migration failed - The schema migration process failed
 D043 - Schema already exists - The schema already exists in the database
 D044 - Schema not found - The schema could not be found in the database
-D045 - Schema error - General schema error
+D045 - Schema Missing - The Schema is not there or is a wrong Schema
+D046 - Schema error - General schema error
 
 // ===== Model Errors (05x) =====
 // Errors related to model operations
@@ -63,7 +64,8 @@ D051 - Model already exists - The model already exists in the database
 D052 - Invalid model definition - The model definition is invalid or malformed
 D053 - Model validation failed - The model validation failed due to errors
 D054 - Model creation failed - Failed to create the model
-D055 - Model error - General model error
+D055 - Model name Error - Invalid model name
+D056 - Model error - General model error
 
 // ===== Transaction Errors (06x) =====
 // Errors related to transaction management
