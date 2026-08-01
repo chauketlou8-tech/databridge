@@ -270,7 +270,7 @@ const UserSchema = new Schema({
 
 ## Architecture
 
-DataBridge uses a clean, driver-based architecture. For a detailed architecture flow diagram and explanation, see [Docks/ARCHITECTURE.md](Docs/ARCHITECTURE.md).
+DataBridge uses a clean, driver-based architecture. For a detailed architecture flow diagram and explanation, see [Docks/ARCHITECTURE.md](ARCHITECTURE.md).
 
 ```
 Application
@@ -310,7 +310,7 @@ interface DatabaseDriver {
 3. Write tests
 4. Update documentation
 
-For a complete visual breakdown of how data flows through the system, check out the [detailed architecture documentation](Docs/ARCHITECTURE.md).
+For a complete visual breakdown of how data flows through the system, check out the [detailed architecture documentation](ARCHITECTURE.md).
 
 This architecture ensures consistency across all databases while keeping each implementation isolated.
 
