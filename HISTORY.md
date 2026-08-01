@@ -78,7 +78,7 @@ This file provides a chronological history of the DataBridge project, documentin
     - index.ts - PostgreSQL exports
 - src/drivers/mysql/ - MySQL driver implementation
     - MysqlDriver.ts - MySQL database driver
-    - MysqlQuery.ts - MySQL query handler
+    - MysqlQuery.test.ts - MySQL query handler
     - Types.ts - MySQL type mappings
     - index.ts - MySQL exports
 - src/drivers/mongodb/ - MongoDB driver implementation

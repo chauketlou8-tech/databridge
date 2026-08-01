@@ -342,7 +342,7 @@ databridge/
 │   │   │   └── index.ts
 │   │   ├── mysql/
 │   │   │   ├── MysqlDriver.ts
-│   │   │   ├── MysqlQuery.ts
+│   │   │   ├── MysqlQuery.test.ts
 │   │   │   ├── Types.ts
 │   │   │   └── index.ts
 │   │   ├── mongodb/
