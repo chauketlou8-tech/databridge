@@ -6,6 +6,7 @@ import { PostgreSQLDriver } from "./postgresql";
 import { MongoDriver } from "./mongodb";
 import { MysqlDriver } from "./mysql";
 import { SQLiteDriver } from "./sqlite";
+import { MariaDriver } from "./mariadb";
 
 export default class DriverFactory {
     /**
@@ -32,6 +33,10 @@ export default class DriverFactory {
                 driver = new MysqlDriver(config);
                 break;
 
+            case "mariadb":
+                driver = new MariaDriver(config);
+                break;
+
             case "mongodb":
                 driver = new MongoDriver(config);
                 break;
@@ -47,7 +52,7 @@ export default class DriverFactory {
         return driver;
     }
     private static isProviderSupported(provider: string): boolean {
-        const supportedProviders = ["postgres", "mysql", "mongodb", "sqlite"];
+        const supportedProviders = ["postgres", "mysql", "mariadb", "mongodb", "sqlite"];
         return supportedProviders.includes(provider);
     }
 }
