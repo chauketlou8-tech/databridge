@@ -1,5 +1,5 @@
 export type Config = {
-    provider: "postgres" | "mysql" | "mongodb" | "sqlite" | "mariadb";
+    provider: "postgres" | "mysql" | "mongodb" | "sqlite" | "mariadb" | "couchdb";
     url?: string;
     host?: string;
     port?: number;

@@ -35,6 +35,7 @@
                 <span>MariaDB</span>
                 <span>MongoDB</span>
                 <span>SQLite</span>
+                <span>CouchDB</span>
             </div>
         </div>
         <div class="hero-code">
@@ -113,26 +114,34 @@ const users = await User.find();</code></pre>
 <section class="databases">
     <div class="container">
         <h2>Supported Databases</h2>
-        <div class="db-grid">
-            <div class="db-card">
-                <h3>PostgreSQL</h3>
-                <p>Production-ready with full SQL support</p>
-            </div>
-            <div class="db-card">
-                <h3>MySQL</h3>
-                <p>The world's most popular open-source database</p>
-            </div>
-            <div class="db-card">
-                <h3>MariaDB</h3>
-                <p>High-performance MySQL fork with more features</p>
-            </div>
-            <div class="db-card">
-                <h3>MongoDB</h3>
-                <p>Flexible NoSQL document database</p>
-            </div>
-            <div class="db-card">
-                <h3>SQLite</h3>
-                <p>Lightweight, embedded SQL database</p>
+        <div class="carousel-container">
+            <div class="carousel-wrapper">
+                <div class="carousel-track" id="carouselTrack">
+                    <div class="db-card">
+                        <h3>PostgreSQL</h3>
+                        <p>Production-ready with full SQL support</p>
+                    </div>
+                    <div class="db-card">
+                        <h3>MySQL</h3>
+                        <p>The world's most popular open-source database</p>
+                    </div>
+                    <div class="db-card">
+                        <h3>MariaDB</h3>
+                        <p>High-performance MySQL fork with more features</p>
+                    </div>
+                    <div class="db-card">
+                        <h3>MongoDB</h3>
+                        <p>Flexible NoSQL document database</p>
+                    </div>
+                    <div class="db-card">
+                        <h3>SQLite</h3>
+                        <p>Lightweight, embedded SQL database</p>
+                    </div>
+                    <div class="db-card">
+                        <h3>CouchDB</h3>
+                        <p>NoSQL document database with HTTP API</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -178,6 +187,7 @@ const users = await User.find();</code></pre>
     </div>
 </footer>
 
+<script src="assets/index.js"></script>
 <script>
     document.getElementById('year').textContent = new Date().getFullYear().toString();
 </script>

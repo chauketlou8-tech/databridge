@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQLite Guide - DataBridge</title>
+    <title>CouchDB Guide - DataBridge</title>
     <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -21,55 +21,50 @@
 
 <div class="page">
     <div class="container">
-        <h1>SQLite Guide</h1>
+        <h1>CouchDB Guide</h1>
 
         <h2>Connection</h2>
         <pre><code>const db = await DataBridge.connect({
-    provider: "sqlite",
-    filename: "./database.sqlite"
+    provider: "couchdb",
+    url: "http://localhost:5984",
+    database: "myapp"
 });</code></pre>
 
         <h2>Connection Options</h2>
         <pre><code>const db = await DataBridge.connect({
-    provider: "sqlite",
-    filename: "./database.sqlite",
+    provider: "couchdb",
+    url: "http://localhost:5984",
+    database: "myapp",
     options: {
-        readonly: false,
-        timeout: 5000
+        // Nano options
     }
-});</code></pre>
-
-        <h2>In-Memory Database</h2>
-        <pre><code>const db = await DataBridge.connect({
-    provider: "sqlite",
-    filename: ":memory:"
 });</code></pre>
 
         <h2>Example</h2>
         <pre><code>import { DataBridge, Schema } from "databridge";
 
 const db = await DataBridge.connect({
-    provider: "sqlite",
-    filename: "./myapp.sqlite"
+    provider: "couchdb",
+    url: "http://localhost:5984",
+    database: "myapp"
 });
 
-const Task = db.model("Task", new Schema({
-    title: String,
-    description: String,
-    completed: Boolean
+const Product = db.model("Product", new Schema({
+    name: String,
+    price: Number,
+    category: String
 }));
 
-await Task.create({
-    title: "Write documentation",
-    description: "Complete the user guide",
-    completed: false
+await Product.create({
+    name: "Laptop",
+    price: 1200,
+    category: "Technology"
 });
 
-const tasks = await Task.find();</code></pre>
+const products = await Product.find();</code></pre>
 
         <div class="next">
-            <a href="mongodb.html">← Previous: MongoDB</a>
-            <a href="couchdb.html">Next: CouchDB →</a>
+            <a href="sqlite.html">← Previous: SQLite</a>
         </div>
     </div>
 </div>

@@ -136,6 +136,7 @@ nav ul a:hover {
 .hero-tags {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .hero-tags span {
@@ -228,7 +229,49 @@ code {
     color: var(--text-secondary);
 }
 
-/* Databases */
+/* Carousel */
+.carousel-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel-wrapper {
+    overflow: hidden;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.carousel-track .db-card {
+    flex-shrink: 0;
+    padding: 24px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    text-align: center;
+    margin: 0 8px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.carousel-track .db-card:hover {
+    border-color: var(--accent);
+}
+
+.carousel-track .db-card h3 {
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+
+.carousel-track .db-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Databases section */
 .databases {
     padding: 60px 0;
 }
@@ -237,31 +280,6 @@ code {
     font-size: 24px;
     text-align: center;
     margin-bottom: 40px;
-}
-
-.db-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-}
-
-.db-card {
-    text-align: center;
-    padding: 24px;
-    background: var(--bg-card);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-}
-
-.db-card h3 {
-    font-size: 16px;
-    margin-bottom: 4px;
-    color: var(--text);
-}
-
-.db-card p {
-    font-size: 14px;
-    color: var(--text-secondary);
 }
 
 /* CTA */
@@ -411,9 +429,6 @@ footer {
     .feature-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    .db-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
     .footer-grid {
         grid-template-columns: 1fr;
         gap: 24px;
@@ -448,9 +463,6 @@ footer {
 
 @media (max-width: 600px) {
     .feature-grid {
-        grid-template-columns: 1fr;
-    }
-    .db-grid {
         grid-template-columns: 1fr;
     }
     .hero-text h1 {
