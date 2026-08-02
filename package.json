@@ -32,6 +32,7 @@
     "postgresql",
     "mongodb",
     "sqlite",
+    "couchdb",
     "sql",
     "nosql",
     "relational",
@@ -42,6 +43,7 @@
     "mariadb": "^3.0.0",
     "mongodb": "^7.0.0",
     "mysql2": "^3.0.0",
+    "nano": "^11.0.0",
     "pg": "^8.0.0",
     "sqlite3": "^6.0.0"
   },
@@ -53,6 +55,9 @@
       "optional": true
     },
     "mysql2": {
+      "optional": true
+    },
+    "nano": {
       "optional": true
     },
     "pg": {
@@ -75,6 +80,7 @@
     "mariadb": "3.5.3",
     "mongodb": "7.5.0",
     "mysql2": "3.23.2",
+    "nano": "11.0.6",
     "pg": "8.22.0",
     "sqlite3": "6.0.1"
   }
