@@ -7,6 +7,7 @@ import { MongoDriver } from "./mongodb";
 import { MysqlDriver } from "./mysql";
 import { SQLiteDriver } from "./sqlite";
 import { MariaDriver } from "./mariadb";
+import { CouchDriver } from "./couchdb";
 
 export default class DriverFactory {
     /**
@@ -15,9 +16,6 @@ export default class DriverFactory {
      * @throws {ProviderError} If provider is not supported
      */
     public static createDriver(provider: string, config: Config): Driver {
-        // TODO: Implement connection logic for each provider
-        // will add connection logic
-
         if (!DriverFactory.isProviderSupported(provider)) {
             throw new ProviderError(`Provider "${provider}" is not supported`, "D005");
         }
@@ -45,6 +43,10 @@ export default class DriverFactory {
                 driver = new SQLiteDriver(config);
                 break;
 
+            case "couchdb":
+                driver = new CouchDriver(config);
+                break;
+
             default:
                 throw new ProviderError("There was an error with the provider.", "D006");
         }
@@ -52,7 +54,7 @@ export default class DriverFactory {
         return driver;
     }
     private static isProviderSupported(provider: string): boolean {
-        const supportedProviders = ["postgres", "mysql", "mariadb", "mongodb", "sqlite"];
+        const supportedProviders = ["postgres", "mysql", "mariadb", "mongodb", "sqlite", "couchdb"];
         return supportedProviders.includes(provider);
     }
 }
