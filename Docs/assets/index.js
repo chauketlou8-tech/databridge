@@ -80,13 +80,14 @@
                 card.style.minWidth = newCardWidth + '%';
                 card.style.maxWidth = newCardWidth + '%';
             });
-            // Recalculate and restart animation
+
             const newOriginalWidth = totalCards * newCardWidth;
             const newStartOffset = cloneCount * newCardWidth;
+
             track.classList.remove('animating');
             track.style.transform = `translateX(-${newStartOffset}%)`;
             track.offsetHeight;
-            // Update keyframes
+
             style.textContent = `
                 @keyframes infiniteScroll {
                     0% {
@@ -97,10 +98,135 @@
                     }
                 }
                 .carousel-track.animating {
-                    animation: infiniteScroll ${totalCards *20}s linear infinite;
+                    animation: infiniteScroll ${totalCards * 20}s linear infinite;
                 }
             `;
             track.classList.add('animating');
         }, 200);
     });
+})();
+
+// ---------------------------------------------------------------------
+// Hero Particle Animation
+// ---------------------------------------------------------------------
+
+(function() {
+    const canvas = document.getElementById('heroCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const hero = document.querySelector('.hero');
+
+    let width, height;
+    let particles = [];
+    const particleCount = 80;
+    const connectionDistance = 150;
+    const maxSpeed = 0.8;
+
+    // -----------------------------------------------------------------
+    // Resize handler
+    // -----------------------------------------------------------------
+
+    function resize() {
+        const rect = hero.getBoundingClientRect();
+        width = rect.width;
+        height = rect.height;
+        canvas.width = width;
+        canvas.height = height;
+    }
+
+    // -----------------------------------------------------------------
+    // Particle class
+    // -----------------------------------------------------------------
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * maxSpeed * 2;
+            this.vy = (Math.random() - 0.5) * maxSpeed * 2;
+            this.radius = Math.random() * 2.5 + 1.5;
+            this.opacity = Math.random() * 0.5 + 0.3;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.x < 0 || this.x > width) this.vx *= -1;
+            if (this.y < 0 || this.y > height) this.vy *= -1;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(88, 166, 255, ${this.opacity})`;
+            ctx.fill();
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Draw connecting lines between particles
+    // -----------------------------------------------------------------
+
+    function drawLines() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < connectionDistance) {
+                    const opacity = 1 - (dist / connectionDistance);
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(88, 166, 255, ${opacity * 0.3})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Animation loop
+    // -----------------------------------------------------------------
+
+    function init() {
+        resize();
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+        animate();
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+
+        drawLines();
+
+        requestAnimationFrame(animate);
+    }
+
+    // -----------------------------------------------------------------
+    // Event listeners
+    // -----------------------------------------------------------------
+
+    window.addEventListener('resize', () => {
+        resize();
+
+        particles.forEach(p => {
+            p.x = Math.min(p.x, width);
+            p.y = Math.min(p.y, height);
+        });
+    });
+
+    init();
 })();
