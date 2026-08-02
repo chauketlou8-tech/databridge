@@ -1,6 +1,5 @@
 import type { Query } from "../types/query";
-import { QueryError, SchemaError } from "../exceptions";
-import { Schema } from "../index";
+import { QueryError } from "../exceptions";
 
 /**
  * Base query handler class
@@ -35,32 +34,7 @@ export default abstract class BaseQuery {
             throw new QueryError("Type not specified", "D035");
         }
 
-        // Validate schema
-        if (!this.query.data?.hasOwnProperty("Schema") || !(this.query.data["Schema"] instanceof Schema)) {
-            throw new SchemaError("The schema definition is invalid or malformed", "D040");
-        }
-
-
         this.data = this.query.data;
-
-        // Build database schema from DataBridge schema
-        const schema = this.query.data["Schema"] as Schema;
-
-        for (const field of schema.fields) {
-            this.fields[field.field] = this.mapType(field.type);
-        }
-
-        /*
-         * Query structure:
-         * const query: Query = {
-         *     operation: "create",
-         *     type: "model",
-         *     data: {
-         *         name: this.name,
-         *         Schema
-         *     }
-         * }
-         */
     }
 
     /**

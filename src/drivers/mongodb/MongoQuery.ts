@@ -2,6 +2,7 @@ import type { Query } from "../../types/query";
 import { QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getBsonType } from "./Types";
+import { Schema } from "../../schema";
 
 /**
  * MongoDB query handler class
@@ -9,10 +10,12 @@ import { getBsonType } from "./Types";
  */
 export default class MongoQuery extends BaseQuery {
     protected connection: any;
+    private collectionName: string;
 
     constructor(query: Query, db: unknown) {
         super(query);
         this.connection = db;
+        this.collectionName = "";
         this.fields = {};
     }
 
@@ -33,15 +36,19 @@ export default class MongoQuery extends BaseQuery {
         try {
             await this.read();
 
+            this.collectionName = this.data?.name as string;
+
             switch (this.operation) {
                 case "create":
                     switch (this.query.type) {
                         case "model":
+                            this.readSchema();
+
                             // Check if collection already exists
-                            const collections = await this.connection?.listCollections({ name: this.data?.name }).toArray();
+                            const collections = await this.connection?.listCollections({ name: this.collectionName }).toArray();
 
                             if (collections && collections.length > 0) {
-                                throw new SchemaError(`Collection "${this.data?.name}" already exists`, "D043");
+                                throw new SchemaError(`Collection "${this.collectionName}" already exists`, "D043");
                             }
 
                             const schema = {
@@ -53,7 +60,13 @@ export default class MongoQuery extends BaseQuery {
                                 }
                             };
 
-                            await this.connection?.createCollection(this.data?.name, schema);
+                            await this.connection?.createCollection(this.collectionName, schema);
+                            break;
+
+                        case "object":
+                            const row = this.data?.data as Record<string, unknown>;
+
+                            await this.connection?.collection(this.collectionName).insertOne(row);
                             break;
                     }
                     break;
@@ -67,6 +80,20 @@ export default class MongoQuery extends BaseQuery {
             }
             // Wrap unknown errors
             throw new QueryError(`MongoDB query failed: ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    private readSchema() {
+        // Validate schema
+        if (!this.query.data?.hasOwnProperty("Schema") || !(this.query.data["Schema"] instanceof Schema)) {
+            throw new SchemaError("The schema definition is invalid or malformed", "D040");
+        }
+
+        // Build database schema from DataBridge schema
+        const schema = this.query.data["Schema"] as Schema;
+
+        for (const field of schema.fields) {
+            this.fields[field.field] = this.mapType(field.type);
         }
     }
 }
