@@ -4,6 +4,7 @@ import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getMysqlType } from "./Types";
 import { Schema } from "../../schema";
+import { Document } from "../../model";
 
 /**
  * MySQL query handler class
@@ -31,7 +32,7 @@ export default class MysqlQuery extends BaseQuery {
      * Executes the query against MySQL
      * @throws {QueryError} If operation fails
      */
-    public async run(): Promise<void> {
+    public async run(): Promise<any> {
         try {
             await this.read();
 
@@ -91,7 +92,20 @@ export default class MysqlQuery extends BaseQuery {
                             return rows;
                         }
 
-                        break;
+                        // Handle where clause
+                        const lookUps = Object.entries(this.data!.where);
+                        const results: Document[] = [];
+
+                        for (const lookUp of lookUps) {
+                            const [key, value] = lookUp;
+
+                            const sql = `select * from \`${this.tableName}\` where \`${key}\` = ?`;
+                            const [rows] = await this.connection.query(sql, [value]);
+                            results.push(rows);
+                        }
+
+                        return results.flat();
+
                     } catch (error) {
                         if (error instanceof SchemaError) {
                             throw error;

@@ -4,6 +4,7 @@ import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getPostgresType } from "./Types";
 import { Schema } from "../../schema";
+import { Document } from "../../model";
 
 /**
  * PostgreSQL query handler class
@@ -31,7 +32,7 @@ export default class PostgresQuery extends BaseQuery {
      * Executes the query against PostgreSQL
      * @throws {QueryError} If operation fails
      */
-    public async run(): Promise<void> {
+    public async run(): Promise<any> {
         try {
             await this.read();
 
@@ -90,7 +91,27 @@ export default class PostgresQuery extends BaseQuery {
                             return result.rows;
                         }
 
-                        break;
+                        /**
+                         * CASE 1:
+                         * Extract the lookup values from the query
+                         * e.g. if User.find({ name: "John" });
+                         * extract { name: "John" } so lookups become [name: "John"]
+                         *
+                         * TODO: other cases
+                         */
+                        const lookUps = Object.entries(this.data!.where);
+                        const results: Document[] = [];
+
+                        for (const lookUp of lookUps) {
+                            const [key, value] = lookUp;
+
+                            const sql = `select * from "${this.tableName}" where ${key} = $1`;
+                            const result = await this.connection.query(sql, [value]);
+                            results.push(result.rows);
+                        }
+
+                        return results.flat();
+
                     } catch (error) {
                         if (error instanceof SchemaError) {
                             throw error;

@@ -3,6 +3,7 @@ import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getSqliteType } from "./Types";
 import { Schema } from "../../schema";
+import { Document } from "../../model"
 
 /**
  * SQLite query handler class
@@ -30,7 +31,7 @@ export default class SqliteQuery extends BaseQuery {
      * Executes the query against SQLite
      * @throws {QueryError} If operation fails
      */
-    public async run(): Promise<void> {
+    public async run(): Promise<any> {
         try {
             await this.read();
 
@@ -83,7 +84,7 @@ export default class SqliteQuery extends BaseQuery {
                             const cols = Object.keys(row).map(col => `"${col}"`).join(", ");
                             const placeholders = Object.keys(row).map(() => "?").join(", ");
 
-                            const sql = `insert into "${this.tableName}" (${cols}) values (${placeholders})`;
+                            const sql = `insert into ${this.tableName} (${cols}) values (${placeholders})`;
 
                             await new Promise<void>((resolve, reject) => {
                                 this.connection.run(sql, Object.values(row), (err: any) => {
@@ -116,7 +117,7 @@ export default class SqliteQuery extends BaseQuery {
                         if (!this.data?.where) {
                             return await new Promise<any>((resolve, reject) => {
                                 this.connection.all(
-                                    `select * from "${this.tableName}"`,
+                                    `select * from ${this.tableName}`,
                                     (err: any, rows: any) => {
                                         if (err) reject(err);
                                         else resolve(rows);
@@ -125,7 +126,28 @@ export default class SqliteQuery extends BaseQuery {
                             });
                         }
 
-                        break;
+                        // Handle where clause
+                        const lookUps = Object.entries(this.data!.where);
+                        const results: Document[] = [];
+
+                        for (const lookUp of lookUps) {
+                            const [key, value] = lookUp;
+
+                            const rows = await new Promise<any>((resolve, reject) => {
+                                this.connection.all(
+                                    `select * from ${this.tableName} where "${key}" = ?`,
+                                    [value],
+                                    (err: any, rows: any) => {
+                                        if (err) reject(err);
+                                        else resolve(rows);
+                                    }
+                                );
+                            });
+                            results.push(rows);
+                        }
+
+                        return results.flat();
+
                     } catch (error) {
                         if (error instanceof SchemaError) {
                             throw error;

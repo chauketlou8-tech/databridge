@@ -4,6 +4,7 @@ import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getCouchType } from "./Types";
 import { Schema } from "../../schema";
+import { Document } from "../../model";
 
 /**
  * CouchDB query handler class
@@ -24,7 +25,7 @@ export default class CouchQuery extends BaseQuery {
         return getCouchType(type);
     }
 
-    public async run(): Promise<void> {
+    public async run(): Promise<any> {
         try {
             await this.read();
             const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -39,9 +40,7 @@ export default class CouchQuery extends BaseQuery {
                 case "create":
                     switch (this.query.type) {
                         case "model":
-                            console.log("error here")
                             this.readSchema();
-                            console.log("check error here")
                             // CouchDB doesn't have schema validation like SQL
                             // Just create the database if it doesn't exist
                             break;
@@ -57,13 +56,26 @@ export default class CouchQuery extends BaseQuery {
                     break;
                 case "find":
                     try {
-                        // Check if database exists
-                        // CouchDB find with selector
                         if (!this.data?.where) {
                             const result = await this.connection.list({ include_docs: true });
                             return result.rows.map((row: any) => row.doc);
                         }
-                        break;
+
+                        // Handle where clause
+                        const lookUps = Object.entries(this.data!.where);
+                        const results: Document [] = [];
+
+                        for (const lookUp of lookUps) {
+                            const selector: Record<string, any> = {};
+                            selector[lookUp[0]] = lookUp[1];
+
+                            const result = await this.connection.find({
+                                selector: selector
+                            });
+                            results.push(result.docs);
+                        }
+
+                        return results.flat();
                     } catch (error) {
                         if (error instanceof SchemaError) {
                             throw error;
@@ -74,7 +86,6 @@ export default class CouchQuery extends BaseQuery {
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
         } catch (error) {
-            console.log(error);
             if (error instanceof QueryError || error instanceof SchemaError || error instanceof ModelError) {
                 throw error;
             }

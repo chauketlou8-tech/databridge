@@ -1,8 +1,9 @@
-import type {Query} from "../../types/query";
-import {ModelError, QueryError, SchemaError} from "../../exceptions";
+import type { Query } from "../../types/query";
+import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import {getMariaType} from "./Types";
-import {Schema} from "../../schema";
+import { getMariaType } from "./Types";
+import { Schema } from "../../schema";
+import { Document } from "../../model";
 
 /**
  * MariaDB query handler class
@@ -30,7 +31,7 @@ export default class MariaQuery extends BaseQuery {
      * Executes the query against MariaDB
      * @throws {QueryError} If operation fails
      */
-    public async run(): Promise<void> {
+    public async run(): Promise<any> {
         try {
             await this.read();
 
@@ -58,7 +59,7 @@ export default class MariaQuery extends BaseQuery {
                             // Build CREATE TABLE query
                             const columns = Object.entries(this.fields).map(([field, type]) => `${field} ${type}`).join(",\n  ");
 
-                            const createTableSQL = `create table if not exists ${this.tableName} (id int primary key auto_increment,${columns})`;
+                            const createTableSQL = `create table if not exists \`${this.tableName}\` (id int primary key auto_increment,${columns})`;
 
                             await this.connection.query(createTableSQL);
                             break;
@@ -86,10 +87,24 @@ export default class MariaQuery extends BaseQuery {
 
                         if (!this.data?.where) {
                             const sql = `select * from \`${this.tableName}\``;
-                            return await this.connection.query(sql);
+                            const [rows] = await this.connection.query(sql);
+                            return rows;
                         }
 
-                        break;
+                        // Handle where clause
+                        const lookUps = Object.entries(this.data!.where);
+                        const results: Document[] = [];
+
+                        for (const lookUp of lookUps) {
+                            const [key, value] = lookUp;
+
+                            const sql = `select * from \`${this.tableName}\` where \`${key}\` = ?`;
+                            const [rows] = await this.connection.query(sql, [value]);
+                            results.push(rows);
+                        }
+
+                        return results.flat();
+
                     } catch (error) {
                         if (error instanceof SchemaError) {
                             throw error;

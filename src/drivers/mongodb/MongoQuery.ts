@@ -1,8 +1,9 @@
-import type {Query} from "../../types/query";
-import {ModelError, QueryError, SchemaError} from "../../exceptions";
+import type { Query } from "../../types/query";
+import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import {getBsonType} from "./Types";
-import {Schema} from "../../schema";
+import { getBsonType } from "./Types";
+import { Schema } from "../../schema";
+import { Document } from "../../model";
 
 /**
  * MongoDB query handler class
@@ -32,7 +33,7 @@ export default class MongoQuery extends BaseQuery {
      * Executes the query against MongoDB
      * @throws {QueryError} If operation fails
      */
-    public async run(): Promise<void> {
+    public async run(): Promise<any> {
         try {
             await this.read();
 
@@ -91,7 +92,21 @@ export default class MongoQuery extends BaseQuery {
                             return await this.connection?.collection(this.collectionName).find({}).toArray();
                         }
 
-                        break;
+                        // Handle where clause
+                        const lookUps = Object.entries(this.data!.where);
+                        const results: Document[] = [];
+
+                        for (const lookUp of lookUps) {
+                            const [key, value] = lookUp;
+                            const filter: Record<string, any> = {};
+                            filter[key] = value;
+
+                            const docs = await this.connection?.collection(this.collectionName).find(filter).toArray();
+                            results.push(docs);
+                        }
+
+                        return results.flat();
+
                     } catch (error) {
                         if (error instanceof SchemaError) {
                             throw error;

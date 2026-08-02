@@ -23,6 +23,12 @@ async function run() {
     });
 
     await User.create({
+        name: "John",
+        email: "john2@example.com",
+        age: 40
+    });
+
+    await User.create({
         name: "Tlou Elvis Chauke",
         email: "chauketlou8@gmail.com",
         age: 19
@@ -31,7 +37,9 @@ async function run() {
     console.log("User created");
 
     const users = await User.find();
+    const user = await User.find({ name: "John" });
     console.log("Users:", users);
+    console.log("User name John:", user);
 }
 
 void run();
