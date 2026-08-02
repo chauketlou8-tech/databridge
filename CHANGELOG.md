@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MariaDB support
 - MongoDB support
 - SQLite support
+- CouchDB support
 - Core CRUD operations (create, read, update, delete)
 - Query builder with fluent interface
 - Schema definition and validation
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MariaDB driver implementation
 - MongoDB driver implementation
 - SQLite driver implementation
+- CouchDB driver implementation
 - Model-based data access
 - Extensible driver architecture
 - Connection pooling
@@ -52,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - IntelliJ IDEA plugin for .bridge files
 - Documentation website with guides for all databases
 - MariaDB guide and documentation
+- CouchDB guide and documentation
+- Auto-sliding database carousel on homepage
 
 ### Fixed
 - Type mismatch between Driver interface and abstract Driver class
@@ -70,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model.ts to properly handle field validation and mismatch errors
 - Database.ts to properly pass driver to ModelFactory
 - All driver query methods to accept Query type instead of string
+- Carousel infinite scroll glitch with CSS animation approach
 
 ---
 

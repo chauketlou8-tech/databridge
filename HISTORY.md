@@ -96,6 +96,11 @@ This file provides a chronological history of the DataBridge project, documentin
     - SqliteQuery.ts - SQLite query handler
     - Types.ts - SQLite type mappings
     - index.ts - SQLite exports
+- src/drivers/couchdb/ - CouchDB driver implementation
+    - CouchDriver.ts - CouchDB database driver
+    - CouchQuery.ts - CouchDB query handler
+    - Types.ts - CouchDB type mappings
+    - index.ts - CouchDB exports
 - src/interfaces/Driver.ts - Driver interface
 - src/interfaces/DriverFactory.ts - DriverFactory interface
 - src/interfaces/Database.ts - Database interface
@@ -128,6 +133,10 @@ This file provides a chronological history of the DataBridge project, documentin
 - tests/manual/MariaDriver.test.ts - Manual tests for MariaDB driver
 - tests/MariaQuery.test.ts - Jest tests for MariaDB query handler
 - tests/manual/MariaQuery.test.ts - Manual tests for MariaDB query handler
+- tests/CouchDriver.test.ts - Jest tests for CouchDB driver
+- tests/manual/CouchDriver.test.ts - Manual tests for CouchDB driver
+- tests/CouchQuery.test.ts - Jest tests for CouchDB query handler
+- tests/manual/CouchQuery.test.ts - Manual tests for CouchDB query handler
 - Error codes system implemented:
     - D001-D006: Provider errors
     - D010-D016: Connection errors
@@ -161,19 +170,19 @@ This file provides a chronological history of the DataBridge project, documentin
 ### 2026-08-02
 
 #### Source Code Added
-- src/drivers/mariadb/ - MariaDB driver implementation
-    - MariaDriver.ts - MariaDB database driver
-    - MariaQuery.ts - MariaDB query handler
-    - Types.ts - MariaDB type mappings
-    - index.ts - MariaDB exports
-- tests/MariaDriver.test.ts - Jest tests for MariaDB driver
-- tests/manual/MariaDriver.test.ts - Manual tests for MariaDB driver
-- tests/MariaQuery.test.ts - Jest tests for MariaDB query handler
-- tests/manual/MariaQuery.test.ts - Manual tests for MariaDB query handler
+- src/drivers/couchdb/ - CouchDB driver implementation
+    - CouchDriver.ts - CouchDB database driver
+    - CouchQuery.ts - CouchDB query handler
+    - Types.ts - CouchDB type mappings
+    - index.ts - CouchDB exports
+- tests/CouchDriver.test.ts - Jest tests for CouchDB driver
+- tests/manual/CouchDriver.test.ts - Manual tests for CouchDB driver
+- tests/CouchQuery.test.ts - Jest tests for CouchDB query handler
+- tests/manual/CouchQuery.test.ts - Manual tests for CouchDB query handler
 
 #### Documentation Updated
-- README.md - Added MariaDB to supported databases
-- Docks/index.html - Added MariaDB to homepage
-- Docks/guides/mariadb.html - MariaDB guide page
-- Updated guide navigation flow: PostgreSQL → MySQL → MariaDB → MongoDB → SQLite
-- Added MariaDB connection examples in documentation
+- README.md - Added CouchDB to supported databases
+- Docks/index.html - Added CouchDB to homepage
+- Docks/guides/couchdb.html - CouchDB guide page
+- Updated guide navigation flow: PostgreSQL → MySQL → MariaDB → MongoDB → SQLite → CouchDB
+- Added CouchDB connection examples in documentation

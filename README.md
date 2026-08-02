@@ -90,6 +90,7 @@ Think of it as Mongoose for everything — but without the vendor lock-in.
 | MariaDB     | In Progress |
 | MongoDB     | Completed   |
 | SQLite      | Completed   |
+| CouchDB     | In Progress |
 
 ---
 
@@ -193,6 +194,16 @@ const db = await DataBridge.connect({
 });
 ```
 
+### CouchDB
+
+```typescript
+const db = await DataBridge.connect({
+    provider: "couchdb",
+    url: "http://localhost:5984",
+    database: "database"
+});
+```
+
 ---
 
 ## Models
@@ -291,6 +302,11 @@ Application
      v
 DataBridge Core
      |
+     |
+   Model
+     |
+     |
+     v
      +----------------+----------------+----------------+
      |                |                |                |
      v                v                v                v
@@ -308,11 +324,7 @@ Each database driver implements the same interface:
 interface DatabaseDriver {
     connect(config: ConnectionConfig): Promise<void>;
     disconnect(): Promise<void>;
-    create<T>(model: string, data: T): Promise<T>;
-    find<T>(model: string, query: Query): Promise<T[]>;
-    findOne<T>(model: string, query: Query): Promise<T | null>;
-    update<T>(model: string, filter: Query, data: Partial<T>): Promise<T>;
-    delete(model: string, query: Query): Promise<boolean>;
+    query(query: Query): Promise<void>
 }
 ```
 
@@ -371,6 +383,11 @@ databridge/
 │   │   ├── sqlite/
 │   │   │   ├── SQLiteDriver.ts
 │   │   │   ├── SqliteQuery.ts
+│   │   │   ├── Types.ts
+│   │   │   └── index.ts
+│   │   ├── couchdb/
+│   │   │   ├── CouchDriver.ts
+│   │   │   ├── CouchQuery.ts
 │   │   │   ├── Types.ts
 │   │   │   └── index.ts
 │   │   ├── Driver.ts
@@ -527,6 +544,7 @@ Write once. Deploy anywhere.
 - MariaDB
 - MongoDB
 - SQLite
+- CouchDB
 
 ---
 
