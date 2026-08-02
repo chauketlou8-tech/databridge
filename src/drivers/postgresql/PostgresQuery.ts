@@ -1,5 +1,6 @@
 import type { Query } from "../../types/query";
 import { QueryError, SchemaError } from "../../exceptions";
+import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getPostgresType } from "./Types";
 import { Schema } from "../../schema";
@@ -73,12 +74,36 @@ export default class PostgresQuery extends BaseQuery {
                             break;
                     }
                     break;
+
+                case "find":
+                    try {
+                        // Check if table exists first
+                        const tableCheck = await this.connection.query(`select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`, [this.tableName]);
+
+                        if (!tableCheck.rows || tableCheck.rows.length === 0) {
+                            throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
+                        }
+
+                        if (!this.data?.where) {
+                            const sql = `select * from "${this.tableName}"`;
+                            const result = await this.connection.query(sql);
+                            return result.rows;
+                        }
+
+                        break;
+                    } catch (error) {
+                        if (error instanceof SchemaError) {
+                            throw error;
+                        }
+                        throw new QueryError(`Failed to query table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+                    }
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
         } catch (error) {
             // Re-throw if it's already a DataBridge error
-            if (error instanceof QueryError || error instanceof SchemaError) {
+            if (error instanceof QueryError || error instanceof SchemaError || error instanceof ModelError) {
                 throw error;
             }
             // Wrap unknown errors

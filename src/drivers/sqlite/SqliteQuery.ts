@@ -1,8 +1,8 @@
-import type { Query } from "../../types/query";
-import { QueryError, SchemaError } from "../../exceptions";
+import type {Query} from "../../types/query";
+import {ModelError, QueryError, SchemaError} from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import { getSqliteType } from "./Types";
-import { Schema } from "../../schema";
+import {getSqliteType} from "./Types";
+import {Schema} from "../../schema";
 
 /**
  * SQLite query handler class
@@ -34,7 +34,13 @@ export default class SqliteQuery extends BaseQuery {
         try {
             await this.read();
 
-            this.tableName = this.data?.name as string;
+            const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+            if (!VALID_IDENTIFIER.test(this.data!.name as string)) {
+                throw new ModelError("Invalid model name", "D056");
+            }
+
+            this.tableName = (this.data!.name as string);
 
             switch (this.operation) {
                 case "create":
@@ -88,12 +94,51 @@ export default class SqliteQuery extends BaseQuery {
                             break;
                     }
                     break;
+
+                case "find":
+                    try {
+                        // Check if table exists
+                        const tableCheck = await new Promise<any>((resolve, reject) => {
+                            this.connection.all(
+                                `select name from sqlite_master where type='table' and name=?`,
+                                [this.tableName],
+                                (err: any, rows: any) => {
+                                    if (err) reject(err);
+                                    else resolve(rows);
+                                }
+                            );
+                        });
+
+                        if (!tableCheck || tableCheck.length === 0) {
+                            throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
+                        }
+
+                        if (!this.data?.where) {
+                            return await new Promise<any>((resolve, reject) => {
+                                this.connection.all(
+                                    `select * from "${this.tableName}"`,
+                                    (err: any, rows: any) => {
+                                        if (err) reject(err);
+                                        else resolve(rows);
+                                    }
+                                );
+                            });
+                        }
+
+                        break;
+                    } catch (error) {
+                        if (error instanceof SchemaError) {
+                            throw error;
+                        }
+                        throw new QueryError(`Failed to query table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+                    }
+
                 default:
-                    throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
+                    throw new QueryError(`Operation "${this.operation}" not implemented", "D036"`);
             }
         } catch (error) {
             // Re-throw if it's already a DataBridge error
-            if (error instanceof QueryError || error instanceof SchemaError) {
+            if (error instanceof QueryError || error instanceof SchemaError || error instanceof ModelError) {
                 throw error;
             }
             // Wrap unknown errors

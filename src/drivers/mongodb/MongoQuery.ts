@@ -1,5 +1,5 @@
 import type { Query } from "../../types/query";
-import { QueryError, SchemaError } from "../../exceptions";
+import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getBsonType } from "./Types";
 import { Schema } from "../../schema";
@@ -36,7 +36,13 @@ export default class MongoQuery extends BaseQuery {
         try {
             await this.read();
 
-            this.collectionName = this.data?.name as string;
+            const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+            if (!VALID_IDENTIFIER.test(this.data!.name as string)) {
+                throw new ModelError("Invalid model name", "D056");
+            }
+
+            this.collectionName = (this.data!.name as string);
 
             switch (this.operation) {
                 case "create":
@@ -70,12 +76,34 @@ export default class MongoQuery extends BaseQuery {
                             break;
                     }
                     break;
+
+                case "find":
+                    try {
+                        // Check if collection exists
+                        const collections = await this.connection?.listCollections({ name: this.collectionName }).toArray();
+
+                        if (!collections || collections.length === 0) {
+                            throw new SchemaError(`Collection "${this.collectionName}" does not exist`, "D044");
+                        }
+
+                        if (!this.data?.where) {
+                            return await this.connection?.collection(this.collectionName).find({}).toArray();
+                        }
+
+                        break;
+                    } catch (error) {
+                        if (error instanceof SchemaError) {
+                            throw error;
+                        }
+                        throw new QueryError(`Failed to query collection "${this.collectionName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+                    }
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
         } catch (error) {
             // Re-throw if it's already a DataBridge error
-            if (error instanceof QueryError || error instanceof SchemaError) {
+            if (error instanceof QueryError || error instanceof SchemaError || error instanceof ModelError) {
                 throw error;
             }
             // Wrap unknown errors

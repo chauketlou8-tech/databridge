@@ -85,6 +85,56 @@ export class Model {
         return new Document(data);
     }
 
+    public async find(where?: Record<string, unknown>): Promise<Document[]> {
+        // example usage
+        /**
+        const db = await DataBridge.connect({
+            provider: "postgres",
+            url: "postgres://user:password@localhost:5432/database"
+        });
+
+        const User = await db.model(
+            "User",
+            new Schema({
+                name: String,
+                email: String,
+                age: Number
+            })
+        );
+
+        await User.create({
+            name: "John",
+            email: "john@example.com",
+            age: 21
+        });
+
+         // returns all the users
+        await User.find();
+
+         // get the user with name John
+         await User.find({ name: "John" });
+
+         // get all users with age >= 21
+         await User.find({
+        age : {
+            gte: 21
+        }
+        })
+         **/
+
+        const findQuery: Query = {
+            operation: "find",
+            type: "document",
+            data: {
+                name: this.name,
+                where
+            }
+        }
+
+        const result: Document[] = await this.driver.query(findQuery);
+        return result as Document[];
+    }
+
     public static async make(Schema: Schema, driver: Driver, name: string) {
         if (!Schema) {
             throw new SchemaError(`Schema is missing or is of wrong type","D045");`)

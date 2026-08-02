@@ -1,5 +1,6 @@
 import type { Query } from "../../types/query";
 import { QueryError, SchemaError } from "../../exceptions";
+import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getMariaType } from "./Types";
 import { Schema } from "../../schema";
@@ -34,7 +35,13 @@ export default class MariaQuery extends BaseQuery {
         try {
             await this.read();
 
-            this.tableName = this.data?.name as string;
+            const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+            if (!VALID_IDENTIFIER.test(this.data!.name as string)) {
+                throw new ModelError("Invalid model name", "D056");
+            }
+
+            this.tableName = (this.data!.name as string);
 
             switch (this.operation) {
                 case "create":
@@ -63,17 +70,41 @@ export default class MariaQuery extends BaseQuery {
                             const cols = Object.keys(row).map(col => `\`${col}\``).join(", ");
                             const placeholders = Object.keys(row).map(() => "?").join(", ");
 
-                            const sql = `insert into \`${this.tableName}\` (${cols}) values (${placeholders})`;
+                            const sql = `insert into "${this.tableName}" (${cols}) values (${placeholders})`;
                             await this.connection.query(sql, Object.values(row));
                             break;
                     }
                     break;
+
+                case "find":
+                    try {
+                        // Check if table exists first
+                        const [tableCheck] = await this.connection.query(`select table_name from information_schema.tables where table_schema = DATABASE() and table_name = ?`, [this.tableName]);
+
+                        if (!tableCheck || tableCheck.length === 0) {
+                            throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
+                        }
+
+                        if (!this.data?.where) {
+                            const sql = `select * from "${this.tableName}"`;
+                            const [rows] = await this.connection.query(sql);
+                            return rows;
+                        }
+
+                        break;
+                    } catch (error) {
+                        if (error instanceof SchemaError) {
+                            throw error;
+                        }
+                        throw new QueryError(`Failed to query table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+                    }
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
         } catch (error) {
             // Re-throw if it's already a DataBridge error
-            if (error instanceof QueryError || error instanceof SchemaError) {
+            if (error instanceof QueryError || error instanceof SchemaError || error instanceof ModelError) {
                 throw error;
             }
             // Wrap unknown errors
