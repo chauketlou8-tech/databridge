@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MySQL Guide - DataBridge</title>
+    <title>MariaDB Guide - DataBridge</title>
     <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -21,11 +21,11 @@
 
 <div class="page">
     <div class="container">
-        <h1>MySQL Guide</h1>
+        <h1>MariaDB Guide</h1>
 
         <h2>Connection</h2>
         <pre><code>const db = await DataBridge.connect({
-    provider: "mysql",
+    provider: "mariadb",
     host: "localhost",
     user: "root",
     password: "password",
@@ -34,7 +34,7 @@
 
         <h2>Connection Options</h2>
         <pre><code>const db = await DataBridge.connect({
-    provider: "mysql",
+    provider: "mariadb",
     host: "localhost",
     port: 3306,
     user: "root",
@@ -51,7 +51,7 @@
         <pre><code>import { DataBridge, Schema } from "databridge";
 
 const db = await DataBridge.connect({
-    provider: "mysql",
+    provider: "mariadb",
     host: "localhost",
     user: "root",
     password: "password",
@@ -73,8 +73,8 @@ await Product.create({
 const products = await Product.find();</code></pre>
 
         <div class="next">
-            <a href="postgres.html">← Previous: PostgreSQL</a>
-            <a href="mariadb.html">Next: MariaDB →</a>
+            <a href="mysql.html">← Previous: MySQL</a>
+            <a href="mongodb.html">Next: MongoDB →</a>
         </div>
     </div>
 </div>
