@@ -1,7 +1,7 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
 import type { Query } from "../../types/query";
-import mysql, { Connection } from "mysql2/promise";
+import mariaDB, { Connection } from "mariadb";
 import { DriverError, ConnectionError } from "../../exceptions";
 import MariaQuery from "./MariaQuery";
 
@@ -26,7 +26,7 @@ export class MariaDriver extends Driver {
         }
 
         try {
-            this.connection = await mysql.createConnection({
+            this.connection = await mariaDB.createConnection({
                 host: this.config.host ?? "localhost",
                 user: this.config.user,
                 password: this.config.password,
@@ -37,19 +37,19 @@ export class MariaDriver extends Driver {
         } catch (error: any) {
             // ER_BAD_DB_ERROR = Unknown database
             if (error?.code === "ER_BAD_DB_ERROR") {
-                const adminConnection = await mysql.createConnection({
+                const adminConnection = await mariaDB.createConnection({
                     host: this.config.host ?? "localhost",
                     user: this.config.user,
                     password: this.config.password,
                 });
 
                 try {
-                    await adminConnection.query(`create database \`${this.config.database}\``);
+                    await adminConnection.query(`create database "${this.config.database}"`);
                 } finally {
                     await adminConnection.end();
                 }
 
-                this.connection = await mysql.createConnection({
+                this.connection = await mariaDB.createConnection({
                     host: this.config.host ?? "localhost",
                     user: this.config.user,
                     password: this.config.password,

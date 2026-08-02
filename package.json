@@ -38,6 +38,30 @@
     "non-relational",
     "bridging"
   ],
+  "peerDependencies": {
+    "mariadb": "^3.0.0",
+    "mongodb": "^7.0.0",
+    "mysql2": "^3.0.0",
+    "pg": "^8.0.0",
+    "sqlite3": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "mariadb": {
+      "optional": true
+    },
+    "mongodb": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    },
+    "sqlite3": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/jest": "30.0.0",
     "@types/node": "26.1.2",
@@ -48,6 +72,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "mariadb": "3.5.3",
     "mongodb": "7.5.0",
     "mysql2": "3.23.2",
     "pg": "8.22.0",
