@@ -3,7 +3,7 @@ import { DataBridge, Schema } from "../../src";
 async function run() {
     const db = await DataBridge.connect({
         provider: "postgres",
-        url: "postgresql://postgres:password@localhost:port/databaseName"
+        url: "postgresql://postgres:password@localhost:port/DBName"
     });
     const User = await db.model(
         "User",
@@ -22,6 +22,9 @@ async function run() {
     });
 
     console.log("User created");
+
+    const users = await User.find();
+    console.log("Users:", users);
 }
 
 void run();
