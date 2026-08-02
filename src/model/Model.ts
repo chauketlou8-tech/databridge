@@ -1,10 +1,14 @@
-import { Schema } from "../schema";
-import { Document } from "./Document";
-import { ModelError, SchemaError } from "../exceptions";
-import { MisMatchError } from "../exceptions/MisMatchError";
-import type { Driver } from "../interfaces/Driver";
-import type { Query } from "../types/query";
+import {Schema} from "../schema";
+import {Document} from "./Document";
+import {ModelError, SchemaError} from "../exceptions";
+import {MisMatchError} from "../exceptions/MisMatchError";
+import type {Driver} from "../interfaces/Driver";
+import type {Query} from "../types/query";
 
+/**
+ * Model class representing a database table/collection
+ * Handles CRUD operations and data validation for a specific model
+ */
 export class Model {
     private readonly name: string;
     private readonly Schema: Schema;
@@ -16,13 +20,20 @@ export class Model {
         this.driver = driver;
     }
 
+    /**
+     * Creates a new document/record in the database
+     * @param data - The data to insert, must match the schema
+     * @returns The created document
+     * @throws {ModelError} If schema validation fails
+     * @throws {MisMatchError} If data doesn't match schema
+     */
     public async create(data: Record<string, unknown>): Promise<Document> {
-        // Check all schema fields exist
+        // Check all schema fields exist in the data
         if (!this.Schema.fields.every(field => data.hasOwnProperty(field.field))) {
             throw new ModelError("The model definition is invalid or malformed","D052");
         }
 
-        // Check there are no extra fields
+        // Check there are no extra fields not defined in schema
         const schemaKeys = this.Schema.fields.map(field => field.field).sort();
         const dataKeys = Object.keys(data).sort();
 
@@ -30,7 +41,7 @@ export class Model {
             throw new MisMatchError("Document fields do not match the schema");
         }
 
-        // Check types
+        // Validate each field's type against the schema definition
         for (const field of this.Schema.fields) {
             const value = data[field.field];
 
@@ -65,12 +76,12 @@ export class Model {
                         throw new MisMatchError(`Field "${field.field}" must be an array`);
                     }
                     break;
-                // Add more type checks as needed
                 default:
                     break;
             }
         }
 
+        // Build and execute the create query
         const createQuery: Query = {
             operation: "create",
             type: "object",
@@ -85,43 +96,22 @@ export class Model {
         return new Document(data);
     }
 
+    /**
+     * Finds documents/records in the database
+     * @param where - Optional filter conditions
+     * @returns Array of documents matching the conditions
+     *
+     * @example
+     * // Get all users
+     * await User.find();
+     *
+     * // Get user with name "John"
+     * await User.find({ name: "John" });
+     *
+     * // Get users with age >= 21
+     * await User.find({ age: { gte: 21 } });
+     */
     public async find(where?: Record<string, unknown>): Promise<Document[]> {
-        // example usage
-        /**
-        const db = await DataBridge.connect({
-            provider: "postgres",
-            url: "postgres://user:password@localhost:5432/database"
-        });
-
-        const User = await db.model(
-            "User",
-            new Schema({
-                name: String,
-                email: String,
-                age: Number
-            })
-        );
-
-        await User.create({
-            name: "John",
-            email: "john@example.com",
-            age: 21
-        });
-
-         // returns all the users
-        await User.find();
-
-         // get the user with name John
-         await User.find({ name: "John" });
-
-         // get all users with age >= 21
-         await User.find({
-        age : {
-            gte: 21
-        }
-        })
-         **/
-
         const findQuery: Query = {
             operation: "find",
             type: "document",
@@ -131,10 +121,16 @@ export class Model {
             }
         }
 
-        const result: Document[] = await this.driver.query(findQuery);
-        return result as Document[];
+        return await this.driver.query(findQuery);
     }
 
+    /**
+     * Creates the database table/collection for this model
+     * @param Schema - The schema definition
+     * @param driver - The database driver instance
+     * @param name - The name of the model/table
+     * @throws {SchemaError} If schema or name is invalid
+     */
     public static async make(Schema: Schema, driver: Driver, name: string) {
         if (!Schema) {
             throw new SchemaError(`Schema is missing or is of wrong type","D045");`)
