@@ -78,9 +78,14 @@ This file provides a chronological history of the DataBridge project, documentin
     - index.ts - PostgreSQL exports
 - src/drivers/mysql/ - MySQL driver implementation
     - MysqlDriver.ts - MySQL database driver
-    - MysqlQuery.test.ts - MySQL query handler
+    - MysqlQuery.ts - MySQL query handler
     - Types.ts - MySQL type mappings
     - index.ts - MySQL exports
+- src/drivers/mariadb/ - MariaDB driver implementation
+    - MariaDriver.ts - MariaDB database driver
+    - MariaQuery.ts - MariaDB query handler
+    - Types.ts - MariaDB type mappings
+    - index.ts - MariaDB exports
 - src/drivers/mongodb/ - MongoDB driver implementation
     - MongoDriver.ts - MongoDB database driver
     - MongoQuery.ts - MongoDB query handler
@@ -119,6 +124,10 @@ This file provides a chronological history of the DataBridge project, documentin
     - BaseQuery.ts - Base query handler with common logic
 - tests/PostgreSQLDriver.test.ts - Jest tests for PostgreSQL driver
 - tests/manual/PostgreSQLDriver.test.ts - Manual tests for PostgreSQL driver
+- tests/MariaDriver.test.ts - Jest tests for MariaDB driver
+- tests/manual/MariaDriver.test.ts - Manual tests for MariaDB driver
+- tests/MariaQuery.test.ts - Jest tests for MariaDB query handler
+- tests/manual/MariaQuery.test.ts - Manual tests for MariaDB query handler
 - Error codes system implemented:
     - D001-D006: Provider errors
     - D010-D016: Connection errors
@@ -147,3 +156,24 @@ This file provides a chronological history of the DataBridge project, documentin
 - Fixed Database.ts to properly pass driver to ModelFactory
 - Fixed all driver query methods to accept Query type instead of string
 - Fixed error codes to include D015, D016, D025, D035, D036, D045, D055, D080, D081
+- Fixed MariaDB driver implementation to extend MySQL driver pattern
+
+### 2026-08-02
+
+#### Source Code Added
+- src/drivers/mariadb/ - MariaDB driver implementation
+    - MariaDriver.ts - MariaDB database driver
+    - MariaQuery.ts - MariaDB query handler
+    - Types.ts - MariaDB type mappings
+    - index.ts - MariaDB exports
+- tests/MariaDriver.test.ts - Jest tests for MariaDB driver
+- tests/manual/MariaDriver.test.ts - Manual tests for MariaDB driver
+- tests/MariaQuery.test.ts - Jest tests for MariaDB query handler
+- tests/manual/MariaQuery.test.ts - Manual tests for MariaDB query handler
+
+#### Documentation Updated
+- README.md - Added MariaDB to supported databases
+- Docks/index.html - Added MariaDB to homepage
+- Docks/guides/mariadb.html - MariaDB guide page
+- Updated guide navigation flow: PostgreSQL → MySQL → MariaDB → MongoDB → SQLite
+- Added MariaDB connection examples in documentation

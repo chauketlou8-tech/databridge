@@ -87,6 +87,7 @@ Think of it as Mongoose for everything — but without the vendor lock-in.
 |-------------|-------------|
 | PostgreSQL  | Completed   |
 | MySQL       | Completed   |
+| MariaDB     | In Progress |
 | MongoDB     | Completed   |
 | SQLite      | Completed   |
 
@@ -155,6 +156,18 @@ const db = await DataBridge.connect({
 ```typescript
 const db = await DataBridge.connect({
     provider: "mysql",
+    host: "localhost",
+    user: "root",
+    password: "password",
+    database: "database"
+});
+```
+
+### MariaDB
+
+```typescript
+const db = await DataBridge.connect({
+    provider: "mariadb",
     host: "localhost",
     user: "root",
     password: "password",
@@ -270,7 +283,7 @@ const UserSchema = new Schema({
 
 ## Architecture
 
-DataBridge uses a clean, driver-based architecture. For a detailed architecture flow diagram and explanation, see [Docks/ARCHITECTURE.md](ARCHITECTURE.md).
+DataBridge uses a clean, driver-based architecture. For a detailed architecture flow diagram and explanation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ```
 Application
@@ -342,7 +355,12 @@ databridge/
 │   │   │   └── index.ts
 │   │   ├── mysql/
 │   │   │   ├── MysqlDriver.ts
-│   │   │   ├── MysqlQuery.test.ts
+│   │   │   ├── MysqlQuery.ts
+│   │   │   ├── Types.ts
+│   │   │   └── index.ts
+│   │   ├── mariadb/
+│   │   │   ├── MariaDriver.ts
+│   │   │   ├── MariaQuery.ts
 │   │   │   ├── Types.ts
 │   │   │   └── index.ts
 │   │   ├── mongodb/
@@ -506,6 +524,7 @@ Write once. Deploy anywhere.
 - Node.js
 - PostgreSQL
 - MySQL
+- MariaDB
 - MongoDB
 - SQLite
 

@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database connection manager
 - PostgreSQL support
 - MySQL support
+- MariaDB support
 - MongoDB support
 - SQLite support
 - Core CRUD operations (create, read, update, delete)
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript type definitions
 - PostgreSQL driver implementation
 - MySQL driver implementation
+- MariaDB driver implementation
 - MongoDB driver implementation
 - SQLite driver implementation
 - Model-based data access
@@ -48,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ModelFactory for creating models
 - Manual and Jest tests for all drivers
 - IntelliJ IDEA plugin for .bridge files
+- Documentation website with guides for all databases
+- MariaDB guide and documentation
 
 ### Fixed
 - Type mismatch between Driver interface and abstract Driver class
