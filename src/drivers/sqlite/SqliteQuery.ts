@@ -1,8 +1,8 @@
-import type {Query} from "../../types/query";
-import {ModelError, QueryError, SchemaError} from "../../exceptions";
+import type { Query } from "../../types/query";
+import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import {getSqliteType} from "./Types";
-import {Schema} from "../../schema";
+import { getSqliteType } from "./Types";
+import { Schema } from "../../schema";
 
 /**
  * SQLite query handler class

@@ -2,11 +2,12 @@ import { DataBridge, Schema } from "../../src";
 
 async function run() {
     const db = await DataBridge.connect({
-        provider: "postgres",
-        url: "postgresql://postgres:password@localhost:port/DBName"
+        provider: "sqlite",
+        filename: "testQ.db"
     });
+
     const User = await db.model(
-        "User",
+        "users",
         new Schema({
             name: String,
             email: String,
@@ -19,6 +20,12 @@ async function run() {
         name: "John",
         email: "john@example.com",
         age: 21
+    });
+
+    await User.create({
+        name: "Tlou Elvis Chauke",
+        email: "chauketlou8@gmail.com",
+        age: 19
     });
 
     console.log("User created");

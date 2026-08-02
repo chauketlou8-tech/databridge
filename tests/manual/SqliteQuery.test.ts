@@ -6,26 +6,25 @@ async function run() {
 
     const db = await DataBridge.connect({
         provider: "sqlite",
-        // @ts-ignore
         filename: "testQ.db"
     });
 
     console.log("Test 1: Create table from schema");
-    const User = db.model("users", new Schema({
+    const User = await db.model("users", new Schema({
         name: String,
         email: String,
         age: Number
     }));
 
-    User.create({
+    await User.create({
         name: "John",
         email: "john@example.com",
         age: 30
     });
     console.log("✅ User created");
 
-    // const users = await User.find();
-    // console.log("✅ Users found:", users);
+    const users = await User.find();
+    console.log("✅ Users found:", users);
 
     await db.getDriver().disconnect();
     console.log("\n✅ All tests passed!");

@@ -13,14 +13,16 @@ export class SQLiteDriver extends Driver {
     }
 
     public async connect(): Promise<void> {
-        if (!this.config.database) {
+        if (!this.config.database && !this.config.filename) {
             throw new DriverError("SQLite database file is missing or empty","D024");
         }
+
+        const dbPath = this.config.database ?? this.config.filename;
 
         try {
             this.db = await new Promise<Database>((resolve, reject) => {
                 const database = new sqlite3.Database(
-                    this.config.database!,
+                    dbPath!,
                     (err) => {
                         if (err) {
                             reject(err);

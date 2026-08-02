@@ -5,9 +5,10 @@ async function run() {
 
     const db = await DataBridge.connect({
         provider: "couchdb",
-        url: "http://localhost:5984",
+        url: "http://admin:password@localhost:port",
         database: "testdb"
     });
+
 
     console.log("Test 1: Create schema");
     const User = await db.model("users", new Schema({

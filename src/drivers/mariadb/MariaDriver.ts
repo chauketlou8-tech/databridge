@@ -44,7 +44,7 @@ export class MariaDriver extends Driver {
                 });
 
                 try {
-                    await adminConnection.query(`create database "${this.config.database}"`);
+                    await adminConnection.query(`create database \`${this.config.database}\``);
                 } finally {
                     await adminConnection.end();
                 }

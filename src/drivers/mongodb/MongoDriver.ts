@@ -47,6 +47,6 @@ export class MongoDriver extends Driver {
             throw new ConnectionError("Not connected to database", "D015");
         }
 
-        await new MongoQuery(query, this.db).run();
+        return await new MongoQuery(query, this.db).run();
     }
 }

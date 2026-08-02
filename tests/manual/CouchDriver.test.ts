@@ -5,7 +5,7 @@ async function run() {
 
     const db = await DataBridge.connect({
         provider: "couchdb",
-        url: "http://localhost:5984",
+        url: "http://admin:password@localhost:port",
         database: "testdb"
     });
 

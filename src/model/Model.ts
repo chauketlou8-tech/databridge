@@ -1,15 +1,15 @@
-import {Schema} from "../schema";
-import {Document} from "./Document";
-import {ModelError, SchemaError} from "../exceptions";
-import {MisMatchError} from "../exceptions/MisMatchError";
-import type {Driver} from "../interfaces/Driver";
-import type {Query} from "../types/query";
+import { Schema } from "../schema";
+import { Document } from "./Document";
+import { ModelError, SchemaError, MisMatchError } from "../exceptions";
+import type { Driver } from "../interfaces/Driver";
+import type { Query } from "../types/query";
+import type { Model as MDL } from "../interfaces/Model";
 
 /**
  * Model class representing a database table/collection
  * Handles CRUD operations and data validation for a specific model
  */
-export class Model {
+export class Model implements MDL {
     private readonly name: string;
     private readonly Schema: Schema;
     private driver: Driver;
@@ -131,7 +131,7 @@ export class Model {
      * @param name - The name of the model/table
      * @throws {SchemaError} If schema or name is invalid
      */
-    public static async make(Schema: Schema, driver: Driver, name: string) {
+    public static async make(Schema: Schema, driver: Driver, name: string): Promise<void> {
         if (!Schema) {
             throw new SchemaError(`Schema is missing or is of wrong type","D045");`)
         }

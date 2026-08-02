@@ -1,4 +1,4 @@
-class ModelError extends Error {
+export default class ModelError extends Error {
     private readonly statusCode: string;
 
     constructor(message: string, statusCode: string = "D056") {

@@ -1,9 +1,8 @@
-import type { Query } from "../../types/query";
-import { QueryError, SchemaError } from "../../exceptions";
-import { ModelError } from "../../exceptions";
+import type {Query} from "../../types/query";
+import {ModelError, QueryError, SchemaError} from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import { getMariaType } from "./Types";
-import { Schema } from "../../schema";
+import {getMariaType} from "./Types";
+import {Schema} from "../../schema";
 
 /**
  * MariaDB query handler class
@@ -70,7 +69,7 @@ export default class MariaQuery extends BaseQuery {
                             const cols = Object.keys(row).map(col => `\`${col}\``).join(", ");
                             const placeholders = Object.keys(row).map(() => "?").join(", ");
 
-                            const sql = `insert into "${this.tableName}" (${cols}) values (${placeholders})`;
+                            const sql = `insert into \`${this.tableName}\` (${cols}) values (${placeholders})`;
                             await this.connection.query(sql, Object.values(row));
                             break;
                     }
@@ -86,9 +85,8 @@ export default class MariaQuery extends BaseQuery {
                         }
 
                         if (!this.data?.where) {
-                            const sql = `select * from "${this.tableName}"`;
-                            const [rows] = await this.connection.query(sql);
-                            return rows;
+                            const sql = `select * from \`${this.tableName}\``;
+                            return await this.connection.query(sql);
                         }
 
                         break;

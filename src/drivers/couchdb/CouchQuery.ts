@@ -27,7 +27,6 @@ export default class CouchQuery extends BaseQuery {
     public async run(): Promise<void> {
         try {
             await this.read();
-
             const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
             if (!VALID_IDENTIFIER.test(this.data!.name as string)) {
@@ -40,7 +39,9 @@ export default class CouchQuery extends BaseQuery {
                 case "create":
                     switch (this.query.type) {
                         case "model":
+                            console.log("error here")
                             this.readSchema();
+                            console.log("check error here")
                             // CouchDB doesn't have schema validation like SQL
                             // Just create the database if it doesn't exist
                             break;
@@ -73,6 +74,7 @@ export default class CouchQuery extends BaseQuery {
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
         } catch (error) {
+            console.log(error);
             if (error instanceof QueryError || error instanceof SchemaError || error instanceof ModelError) {
                 throw error;
             }

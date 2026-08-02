@@ -1,8 +1,8 @@
-import type { Query } from "../../types/query";
-import { ModelError, QueryError, SchemaError } from "../../exceptions";
+import type {Query} from "../../types/query";
+import {ModelError, QueryError, SchemaError} from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import { getBsonType } from "./Types";
-import { Schema } from "../../schema";
+import {getBsonType} from "./Types";
+import {Schema} from "../../schema";
 
 /**
  * MongoDB query handler class
@@ -50,6 +50,7 @@ export default class MongoQuery extends BaseQuery {
                         case "model":
                             this.readSchema();
 
+                            this.fields["_id"] = { bsonType: "objectId" };
                             // Check if collection already exists
                             const collections = await this.connection?.listCollections({ name: this.collectionName }).toArray();
 
@@ -61,7 +62,8 @@ export default class MongoQuery extends BaseQuery {
                                 validator: {
                                     $jsonSchema: {
                                         bsonType: "object",
-                                        properties: this.fields
+                                        properties: this.fields,
+                                        additionalProperties: true
                                     }
                                 }
                             };
@@ -71,7 +73,6 @@ export default class MongoQuery extends BaseQuery {
 
                         case "object":
                             const row = this.data?.data as Record<string, unknown>;
-
                             await this.connection?.collection(this.collectionName).insertOne(row);
                             break;
                     }

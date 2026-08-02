@@ -22,6 +22,7 @@ export class DataBridge {
      * @param config.user - Database user (alternative to url)
      * @param config.password - Database password (alternative to url)
      * @param config.database - Database name (alternative to url)
+     * @param config.filename - Database file (alternative for sqlite)
      * @param config.options - Additional provider-specific options
      *
      * @returns Promise resolving to a Database instance

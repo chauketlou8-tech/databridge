@@ -6,7 +6,7 @@ async function run() {
 
     const db = await DataBridge.connect({
         provider: "mongodb",
-        url: "mongodb://localhost:27017/testdb"
+        url: "mongodb+srv://username:password@cluster.h6kymkq.mongodb.net/dbName?retryWrites=true&w=majority"
     });
 
     console.log("Test 1: Create collection from schema");
@@ -24,8 +24,8 @@ async function run() {
     });
     console.log("✅ User created");
 
-    // const users = await User.find();
-    // console.log("✅ Users found:", users);
+    const users = await User.find();
+    console.log("✅ Users found:", users);
 
     await db.getDriver().disconnect();
     console.log("\n✅ All tests passed!");

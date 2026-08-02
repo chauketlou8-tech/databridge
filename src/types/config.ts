@@ -6,5 +6,6 @@ export type Config = {
     user?: string;
     password?: string;
     database?: string;
+    filename?: string;
     options?: Record<any, any>;
 }

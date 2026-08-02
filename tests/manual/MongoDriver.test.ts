@@ -1,4 +1,5 @@
 import { MongoDriver } from "../../src/drivers/mongodb";
+import {DataBridge} from "../../src";
 
 async function run() {
     console.log("=== Testing MongoDB Driver ===\n");
@@ -6,8 +7,9 @@ async function run() {
     console.log("Test 1: Valid connection");
     const driver = new MongoDriver({
         provider: "mongodb",
-        url: "mongodb://localhost:27017/testdb"
+        url: "mongodb+srv://username:password@cluster.h6kymkq.mongodb.net/dbName?retryWrites=true&w=majority"
     });
+
     await driver.connect();
     console.log("✅ Connected");
 

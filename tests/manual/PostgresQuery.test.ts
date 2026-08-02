@@ -6,17 +6,17 @@ async function run() {
 
     const db = await DataBridge.connect({
         provider: "postgres",
-        url: "postgres://localhost:5432/testdb"
+        url: "postgresql://postgres:password@localhost:port/DBName"
     });
 
     console.log("Test 1: Create table from schema");
-    const User = db.model("users", new Schema({
+    const User = await db.model("users", new Schema({
         name: String,
         email: String,
         age: Number
     }));
 
-    User.create({
+    await User.create({
         name: "John",
         email: "john@example.com",
         age: 30

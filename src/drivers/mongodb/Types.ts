@@ -3,7 +3,7 @@
  */
 export const TYPE_TO_BSON: Record<string, string> = {
     "STRING": "string",
-    "NUMBER": "double",
+    "NUMBER": "int",
     "BOOLEAN": "bool",
     "DATE": "date",
     "OBJECT": "object",

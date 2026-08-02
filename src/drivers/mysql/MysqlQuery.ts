@@ -59,7 +59,7 @@ export default class MysqlQuery extends BaseQuery {
                             // Build CREATE TABLE query
                             const columns = Object.entries(this.fields).map(([field, type]) => `${field} ${type}`).join(",\n  ");
 
-                            const createTableSQL = `create table if not exists ${this.tableName} (id int primary key auto_increment,${columns})`;
+                            const createTableSQL = `create table if not exists \`${this.tableName}\` (id int primary key auto_increment,${columns})`;
 
                             await this.connection.query(createTableSQL);
                             break;
@@ -70,7 +70,7 @@ export default class MysqlQuery extends BaseQuery {
                             const cols = Object.keys(row).map(col => `\`${col}\``).join(", ");
                             const placeholders = Object.keys(row).map(() => "?").join(", ");
 
-                            const sql = `insert into "${this.tableName}" (${cols}) values (${placeholders})`;
+                            const sql = `insert into \`${this.tableName}\` (${cols}) values (${placeholders})`;
                             await this.connection.query(sql, Object.values(row));
                             break;
                     }
@@ -86,7 +86,7 @@ export default class MysqlQuery extends BaseQuery {
                         }
 
                         if (!this.data?.where) {
-                            const sql = `select * from "${this.tableName}"`;
+                            const sql = `select * from \`${this.tableName}\``;
                             const [rows] = await this.connection.query(sql);
                             return rows;
                         }
