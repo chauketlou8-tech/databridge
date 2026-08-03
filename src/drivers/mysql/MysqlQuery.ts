@@ -85,9 +85,28 @@ export default class MysqlQuery extends BaseQuery {
                             throw new SchemaError(`Table "${this.tableName}" does not exist", "D044"`);
                         }
 
-                        if (!this.data?.where) {
+                        if (!this.data?.where || Object.keys(this.data.where).length === 0) {
                             const sql = `select * from \`${this.tableName}\``;
                             const [rows] = await this.connection.query(sql);
+                            return rows;
+                        }
+
+                        // @ts-ignore
+                        if (this.data.where.or && Array.isArray(this.data.where.or)) {
+                            // @ts-ignore
+                            const orConditions = this.data.where.or;
+                            let whereClauses: string[] = [];
+                            let values: any[] = [];
+
+                            for (const condition of orConditions) {
+                                for (const [key, value] of Object.entries(condition)) {
+                                    whereClauses.push(`\`${key}\` = ?`);
+                                    values.push(value);
+                                }
+                            }
+
+                            const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' or ')}`;
+                            const [rows] = await this.connection.query(sql, values);
                             return rows;
                         }
 
@@ -152,20 +171,6 @@ export default class MysqlQuery extends BaseQuery {
             }
             // Wrap unknown errors
             throw new QueryError(`MySQL query failed: ${error instanceof Error ? error.message : String(error)}`, "D031");
-        }
-    }
-
-    private readSchema() {
-        // Validate schema
-        if (!this.query.data?.hasOwnProperty("Schema") || !(this.query.data["Schema"] instanceof Schema)) {
-            throw new SchemaError("The schema definition is invalid or malformed", "D040");
-        }
-
-        // Build database schema from DataBridge schema
-        const schema = this.query.data["Schema"] as Schema;
-
-        for (const field of schema.fields) {
-            this.fields[field.field] = this.mapType(field.type);
         }
     }
 }

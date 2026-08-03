@@ -1,8 +1,8 @@
-import type { Query } from "../../types/query";
-import { ModelError, QueryError, SchemaError } from "../../exceptions";
+import type {Query} from "../../types/query";
+import {ModelError, QueryError, SchemaError} from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import { getMariaType } from "./Types";
-import { Schema } from "../../schema";
+import {getMariaType} from "./Types";
+import {Schema} from "../../schema";
 
 /**
  * MariaDB query handler class
@@ -49,9 +49,8 @@ export default class MariaQuery extends BaseQuery {
                             this.readSchema();
 
                             // Check if table already exists
-                            const [tables] = await this.connection.query(`select table_name from information_schema.tables where table_schema = DATABASE() and table_name = ?`, [this.tableName]);
-
-                            if (tables && tables.length > 0) {
+                            const tables = await this.connection.query(`select table_name from information_schema.tables where table_schema = DATABASE() and table_name = ?`, [this.tableName]);
+                            if (tables && tables.length > 0 && tables[0].TABLE_NAME) {
                                 throw new SchemaError(`Table "${this.tableName}" already exists`, "D043");
                             }
 
@@ -78,16 +77,32 @@ export default class MariaQuery extends BaseQuery {
                 case "find":
                     try {
                         // Check if table exists first
-                        const [tableCheck] = await this.connection.query(`select table_name from information_schema.tables where table_schema = DATABASE() and table_name = ?`, [this.tableName]);
-
-                        if (!tableCheck || tableCheck.length === 0) {
+                        const tableCheck = await this.connection.query(`select table_name from information_schema.tables where table_schema = DATABASE() and table_name = ?`, [this.tableName]);
+                        if (!tableCheck[0] || tableCheck[0].length === 0) {
                             throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
                         }
 
-                        if (!this.data?.where) {
+                        if (!this.data?.where || Object.keys(this.data.where).length === 0) {
                             const sql = `select * from \`${this.tableName}\``;
-                            const [rows] = await this.connection.query(sql);
-                            return rows;
+                            return await this.connection.query(sql);
+                        }
+
+                        // @ts-ignore
+                        if (this.data.where.or && Array.isArray(this.data.where.or)) {
+                            // @ts-ignore
+                            const orConditions = this.data.where.or;
+                            let whereClauses: string[] = [];
+                            let values: any[] = [];
+
+                            for (const condition of orConditions) {
+                                for (const [key, value] of Object.entries(condition)) {
+                                    whereClauses.push(`\`${key}\` = ?`);
+                                    values.push(value);
+                                }
+                            }
+
+                            const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' or ')}`;
+                            return await this.connection.query(sql, values);
                         }
 
                         // Handle where clause
@@ -131,8 +146,7 @@ export default class MariaQuery extends BaseQuery {
                         }
 
                         const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' and ')}`;
-                        const [rows] = await this.connection.query(sql, values);
-                        return rows;
+                        return await this.connection.query(sql, values);
 
                     } catch (error) {
                         if (error instanceof SchemaError) {
@@ -151,20 +165,6 @@ export default class MariaQuery extends BaseQuery {
             }
             // Wrap unknown errors
             throw new QueryError(`MariaDB query failed: ${error instanceof Error ? error.message : String(error)}`, "D031");
-        }
-    }
-
-    private readSchema() {
-        // Validate schema
-        if (!this.query.data?.hasOwnProperty("Schema") || !(this.query.data["Schema"] instanceof Schema)) {
-            throw new SchemaError("The schema definition is invalid or malformed", "D040");
-        }
-
-        // Build database schema from DataBridge schema
-        const schema = this.query.data["Schema"] as Schema;
-
-        for (const field of schema.fields) {
-            this.fields[field.field] = this.mapType(field.type);
         }
     }
 }

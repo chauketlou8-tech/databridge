@@ -1,7 +1,7 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
 import type { Query } from "../../types/query";
-import { DriverError, ConnectionError } from "../../exceptions";
+import { DriverError, ConnectionError, SchemaError } from "../../exceptions";
 import CouchQuery from "./CouchQuery";
 import nano from "nano";
 
@@ -42,23 +42,19 @@ export class CouchDriver extends Driver {
 
             try {
                 await this.connection.db.get(this.config.database);
+                // If we get here, database exists
+                throw new SchemaError(`Database "${this.config.database}" already exists`, "D043");
             } catch (error: any) {
                 if (error.statusCode === 404) {
+                    // Database doesn't exist, create it
                     await this.connection.db.create(this.config.database);
-                }
-
-                else if (error.statusCode === 401) {
+                } else if (error.statusCode === 401) {
                     throw new ConnectionError("Authentication failed. Invalid username or password.", "D011");
-                }
-
-                else if (error.statusCode === 403) {
+                } else if (error.statusCode === 403) {
                     throw new ConnectionError("Permission denied. You don't have access to this database.", "D011");
-                }
-
-                else if (error.statusCode === 412) {
-                    // Database already exists with different settings - ignore
-                }
-                else {
+                } else if (error.statusCode === 412) {
+                    throw new SchemaError(`Database "${this.config.database}" already exists with different settings`, "D043");
+                } else {
                     throw error;
                 }
             }
@@ -72,7 +68,7 @@ export class CouchDriver extends Driver {
                 throw new ConnectionError(`Failed to connect to CouchDB: Connection timeout.`, "D010");
             }
             // If it's already a DataBridge error, re-throw it
-            if (error instanceof DriverError || error instanceof ConnectionError) {
+            if (error instanceof DriverError || error instanceof ConnectionError || error instanceof SchemaError) {
                 throw error;
             }
             throw new ConnectionError(`Failed to connect to CouchDB: ${error instanceof Error ? error.message : String(error)}`);

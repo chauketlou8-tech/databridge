@@ -1,5 +1,6 @@
 import type { Query } from "../types/query";
-import { QueryError } from "../exceptions";
+import {QueryError, SchemaError} from "../exceptions";
+import {Schema} from "../schema";
 
 /**
  * Base query handler class
@@ -35,6 +36,20 @@ export default abstract class BaseQuery {
         }
 
         this.data = this.query.data;
+    }
+
+    protected readSchema() {
+        // Validate schema
+        if (!this.query.data?.hasOwnProperty("Schema") || !(this.query.data["Schema"] instanceof Schema)) {
+            throw new SchemaError("The schema definition is invalid or malformed", "D040");
+        }
+
+        // Build database schema from DataBridge schema
+        const schema = this.query.data["Schema"] as Schema;
+
+        for (const field of schema.fields) {
+            this.fields[field.field] = this.mapType(field.type);
+        }
     }
 
     /**

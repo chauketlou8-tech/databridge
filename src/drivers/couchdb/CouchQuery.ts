@@ -24,6 +24,65 @@ export default class CouchQuery extends BaseQuery {
         return getCouchType(type);
     }
 
+    private validateDataAgainstSchema(data: Record<string, unknown>, schema: Schema) {
+        // Check all schema fields exist in the data
+        for (const field of schema.fields) {
+            if (!data.hasOwnProperty(field.field)) {
+                throw new ModelError(`Missing required field: "${field.field}"`, "D052");
+            }
+        }
+
+        // Check there are no extra fields
+        const schemaKeys = schema.fields.map(f => f.field);
+        const dataKeys = Object.keys(data);
+
+        for (const key of dataKeys) {
+            if (key !== 'type' && !schemaKeys.includes(key)) {
+                throw new ModelError(`Extra field "${key}" not defined in schema`, "D052");
+            }
+        }
+
+        // Check types
+        for (const field of schema.fields) {
+            const value = data[field.field];
+
+            switch (field.type) {
+                case "STRING":
+                    if (typeof value !== "string") {
+                        throw new ModelError(`Field "${field.field}" must be a string`, "D053");
+                    }
+                    break;
+                case "NUMBER":
+                    if (typeof value !== "number") {
+                        throw new ModelError(`Field "${field.field}" must be a number`, "D053");
+                    }
+                    break;
+                case "BOOLEAN":
+                    if (typeof value !== "boolean") {
+                        throw new ModelError(`Field "${field.field}" must be a boolean`, "D053");
+                    }
+                    break;
+                case "DATE":
+                    if (!(value instanceof Date) && typeof value !== "string") {
+                        throw new ModelError(`Field "${field.field}" must be a Date or string`, "D053");
+                    }
+                    break;
+                case "OBJECT":
+                    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+                        throw new ModelError(`Field "${field.field}" must be an object`, "D053");
+                    }
+                    break;
+                case "ARRAY":
+                    if (!Array.isArray(value)) {
+                        throw new ModelError(`Field "${field.field}" must be an array`, "D053");
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     public async run(): Promise<any> {
         try {
             await this.read();
@@ -40,11 +99,16 @@ export default class CouchQuery extends BaseQuery {
                     switch (this.query.type) {
                         case "model":
                             this.readSchema();
-                            // CouchDB doesn't have schema validation like SQL
-                            // Just create the database if it doesn't exist
                             break;
                         case "object":
                             const row = this.data?.data as Record<string, unknown>;
+
+                            // Validate data against schema
+                            const schema = this.query.data?.Schema as Schema;
+                            if (schema && schema instanceof Schema) {
+                                this.validateDataAgainstSchema(row, schema);
+                            }
+
                             const doc = {
                                 ...row,
                                 type: this.databaseName
@@ -55,9 +119,29 @@ export default class CouchQuery extends BaseQuery {
                     break;
                 case "find":
                     try {
-                        if (!this.data?.where) {
+                        if (!this.data?.where || Object.keys(this.data.where).length === 0) {
                             const result = await this.connection.list({ include_docs: true });
                             return result.rows.map((row: any) => row.doc);
+                        }
+
+                        // @ts-ignore
+                        if (this.data.where.or && Array.isArray(this.data.where.or)) {
+                            // @ts-ignore
+                            const orConditions = this.data.where.or;
+                            let selector: Record<string, any> = { $or: [] };
+
+                            for (const condition of orConditions) {
+                                const orCondition: Record<string, any> = {};
+                                for (const [key, value] of Object.entries(condition)) {
+                                    orCondition[key] = value;
+                                }
+                                selector.$or.push(orCondition);
+                            }
+
+                            const result = await this.connection.find({
+                                selector: selector
+                            });
+                            return result.docs;
                         }
 
                         // Handle where clause with operators
@@ -111,18 +195,6 @@ export default class CouchQuery extends BaseQuery {
                 throw error;
             }
             throw new QueryError(`CouchDB query failed: ${error instanceof Error ? error.message : String(error)}`, "D031");
-        }
-    }
-
-    private readSchema() {
-        if (!this.query.data?.hasOwnProperty("Schema") || !(this.query.data["Schema"] instanceof Schema)) {
-            throw new SchemaError("The schema definition is invalid or malformed", "D040");
-        }
-
-        const schema = this.query.data["Schema"] as Schema;
-
-        for (const field of schema.fields) {
-            this.fields[field.field] = this.mapType(field.type);
         }
     }
 }

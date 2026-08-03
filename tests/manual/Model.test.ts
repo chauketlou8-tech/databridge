@@ -23,8 +23,8 @@ async function run() {
     });
 
     await User.create({
-        name: "John",
-        email: "john2@example.com",
+        name: "David",
+        email: "david@example.com",
         age: 40
     });
 
@@ -43,9 +43,18 @@ async function run() {
             lte: 19
         }
     });
+
+    const userOr = await User.find({
+        or: [
+            { name: "John" },
+            { name: "David" }
+        ]
+    });
+
     console.log("Users:", users);
     console.log("User name John:", user);
     console.log("User less equal to 19:", UserLess);
+    console.log("Or query users:", userOr);
 }
 
 void run();
