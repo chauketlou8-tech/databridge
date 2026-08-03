@@ -1,8 +1,7 @@
-import type {Query} from "../../types/query";
-import {ModelError, QueryError, SchemaError} from "../../exceptions";
+import type { Query } from "../../types/query";
+import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import {getBsonType} from "./Types";
-import {Schema} from "../../schema";
+import { getBsonType } from "./Types";
 
 /**
  * MongoDB query handler class
@@ -103,6 +102,20 @@ export default class MongoQuery extends BaseQuery {
                                     orCondition[key] = value;
                                 }
                                 filter.$or.push(orCondition);
+                            }
+
+                            return await this.connection?.collection(this.collectionName).find(filter).toArray();
+                        }
+
+                        // Handle not operator
+                        // @ts-ignore
+                        if (this.data.where.not && typeof this.data.where.not === "object") {
+                            // @ts-ignore
+                            const notConditions = this.data.where.not;
+                            let filter: Record<string, any> = {};
+
+                            for (const [key, value] of Object.entries(notConditions)) {
+                                filter[key] = { $ne: value };
                             }
 
                             return await this.connection?.collection(this.collectionName).find(filter).toArray();

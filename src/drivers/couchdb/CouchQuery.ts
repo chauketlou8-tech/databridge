@@ -144,6 +144,23 @@ export default class CouchQuery extends BaseQuery {
                             return result.docs;
                         }
 
+                        // Handle not operator
+                        // @ts-ignore
+                        if (this.data.where.not && typeof this.data.where.not === "object") {
+                            // @ts-ignore
+                            const notConditions = this.data.where.not;
+                            let selector: Record<string, any> = {};
+
+                            for (const [key, value] of Object.entries(notConditions)) {
+                                selector[key] = { $ne: value };
+                            }
+
+                            const result = await this.connection.find({
+                                selector: selector
+                            });
+                            return result.docs;
+                        }
+
                         // Handle where clause with operators
                         const lookUps = Object.entries(this.data!.where);
                         let selector: Record<string, any> = {};

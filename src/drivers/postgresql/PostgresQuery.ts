@@ -3,7 +3,6 @@ import { QueryError, SchemaError } from "../../exceptions";
 import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getPostgresType } from "./Types";
-import { Schema } from "../../schema";
 
 /**
  * PostgreSQL query handler class
@@ -110,6 +109,26 @@ export default class PostgresQuery extends BaseQuery {
 
                             const sql = `select * from "${this.tableName}" where ${orClauses.join(' or ')}`;
                             const result = await this.connection.query(sql, orValues);
+                            return result.rows;
+                        }
+
+                        // Handle not operator
+                        // @ts-ignore
+                        if (this.data.where.not && typeof this.data.where.not === "object") {
+                            // @ts-ignore
+                            const notConditions = this.data.where.not;
+                            const notClauses: string[] = [];
+                            const notValues: any[] = [];
+                            let paramIndex = 1;
+
+                            for (const [key, value] of Object.entries(notConditions)) {
+                                notClauses.push(`"${key}" != $${paramIndex}`);
+                                notValues.push(value);
+                                paramIndex++;
+                            }
+
+                            const sql = `select * from "${this.tableName}" where ${notClauses.join(' and ')}`;
+                            const result = await this.connection.query(sql, notValues);
                             return result.rows;
                         }
 

@@ -3,7 +3,6 @@ import { QueryError, SchemaError } from "../../exceptions";
 import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getMysqlType } from "./Types";
-import { Schema } from "../../schema";
 
 /**
  * MySQL query handler class
@@ -82,7 +81,7 @@ export default class MysqlQuery extends BaseQuery {
                         const [tableCheck] = await this.connection.query(`select table_name from information_schema.tables where table_schema = DATABASE() and table_name = ?`, [this.tableName]);
 
                         if (!tableCheck || tableCheck.length === 0) {
-                            throw new SchemaError(`Table "${this.tableName}" does not exist", "D044"`);
+                            throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
                         }
 
                         if (!this.data?.where || Object.keys(this.data.where).length === 0) {
@@ -106,6 +105,24 @@ export default class MysqlQuery extends BaseQuery {
                             }
 
                             const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' or ')}`;
+                            const [rows] = await this.connection.query(sql, values);
+                            return rows;
+                        }
+
+                        // Handle not operator
+                        // @ts-ignore
+                        if (this.data.where.not && typeof this.data.where.not === "object") {
+                            // @ts-ignore
+                            const notConditions = this.data.where.not;
+                            let whereClauses: string[] = [];
+                            let values: any[] = [];
+
+                            for (const [key, value] of Object.entries(notConditions)) {
+                                whereClauses.push(`\`${key}\` != ?`);
+                                values.push(value);
+                            }
+
+                            const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' and ')}`;
                             const [rows] = await this.connection.query(sql, values);
                             return rows;
                         }

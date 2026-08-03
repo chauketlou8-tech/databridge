@@ -1,8 +1,7 @@
-import type {Query} from "../../types/query";
-import {ModelError, QueryError, SchemaError} from "../../exceptions";
+import type { Query } from "../../types/query";
+import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import {getSqliteType} from "./Types";
-import {Schema} from "../../schema";
+import {getSqliteType } from "./Types";
 
 /**
  * SQLite query handler class
@@ -61,7 +60,7 @@ export default class SqliteQuery extends BaseQuery {
                             });
 
                             if (tables && tables.length > 0) {
-                                throw new SchemaError(`Table "${this.tableName}" already exists", "D043"`);
+                                throw new SchemaError(`Table "${this.tableName}" already exists`, "D043");
                             }
 
                             // Build CREATE TABLE query
@@ -142,6 +141,31 @@ export default class SqliteQuery extends BaseQuery {
                             return await new Promise<any>((resolve, reject) => {
                                 this.connection.all(
                                     `select * from ${this.tableName} where ${whereClauses.join(' or ')}`,
+                                    values,
+                                    (err: any, rows: any) => {
+                                        if (err) reject(err);
+                                        else resolve(rows);
+                                    }
+                                );
+                            });
+                        }
+
+                        // Handle not operator
+                        // @ts-ignore
+                        if (this.data.where.not && typeof this.data.where.not === "object") {
+                            // @ts-ignore
+                            const notConditions = this.data.where.not;
+                            let whereClauses: string[] = [];
+                            let values: any[] = [];
+
+                            for (const [key, value] of Object.entries(notConditions)) {
+                                whereClauses.push(`"${key}" != ?`);
+                                values.push(value);
+                            }
+
+                            return await new Promise<any>((resolve, reject) => {
+                                this.connection.all(
+                                    `select * from ${this.tableName} where ${whereClauses.join(' and ')}`,
                                     values,
                                     (err: any, rows: any) => {
                                         if (err) reject(err);

@@ -105,6 +105,23 @@ export default class MariaQuery extends BaseQuery {
                             return await this.connection.query(sql, values);
                         }
 
+                        // Handle not operator
+                        // @ts-ignore
+                        if (this.data.where.not && typeof this.data.where.not === "object") {
+                            // @ts-ignore
+                            const notConditions = this.data.where.not;
+                            let whereClauses: string[] = [];
+                            let values: any[] = [];
+
+                            for (const [key, value] of Object.entries(notConditions)) {
+                                whereClauses.push(`\`${key}\` != ?`);
+                                values.push(value);
+                            }
+
+                            const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' and ')}`;
+                            return await this.connection.query(sql, values);
+                        }
+
                         // Handle where clause
                         const lookUps = Object.entries(this.data!.where);
                         let whereClauses: string[] = [];
