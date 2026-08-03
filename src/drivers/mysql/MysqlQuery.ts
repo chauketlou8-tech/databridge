@@ -4,7 +4,6 @@ import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getMysqlType } from "./Types";
 import { Schema } from "../../schema";
-import { Document } from "../../model";
 
 /**
  * MySQL query handler class
@@ -83,7 +82,7 @@ export default class MysqlQuery extends BaseQuery {
                         const [tableCheck] = await this.connection.query(`select table_name from information_schema.tables where table_schema = DATABASE() and table_name = ?`, [this.tableName]);
 
                         if (!tableCheck || tableCheck.length === 0) {
-                            throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
+                            throw new SchemaError(`Table "${this.tableName}" does not exist", "D044"`);
                         }
 
                         if (!this.data?.where) {
@@ -94,17 +93,47 @@ export default class MysqlQuery extends BaseQuery {
 
                         // Handle where clause
                         const lookUps = Object.entries(this.data!.where);
-                        const results: Document[] = [];
+                        let whereClauses: string[] = [];
+                        let values: any[] = [];
 
-                        for (const lookUp of lookUps) {
-                            const [key, value] = lookUp;
-
-                            const sql = `select * from \`${this.tableName}\` where \`${key}\` = ?`;
-                            const [rows] = await this.connection.query(sql, [value]);
-                            results.push(rows);
+                        for (const [key, value] of lookUps) {
+                            if (typeof value === "object" && value !== null) {
+                                for (const [operator, opValue] of Object.entries(value)) {
+                                    switch (operator) {
+                                        case "gte":
+                                            whereClauses.push(`\`${key}\` >= ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "gt":
+                                            whereClauses.push(`\`${key}\` > ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "lte":
+                                            whereClauses.push(`\`${key}\` <= ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "lt":
+                                            whereClauses.push(`\`${key}\` < ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "ne":
+                                            whereClauses.push(`\`${key}\` != ?`);
+                                            values.push(opValue);
+                                            break;
+                                        default:
+                                            whereClauses.push(`\`${key}\` = ?`);
+                                            values.push(opValue);
+                                    }
+                                }
+                            } else {
+                                whereClauses.push(`\`${key}\` = ?`);
+                                values.push(value);
+                            }
                         }
 
-                        return results.flat();
+                        const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' and ')}`;
+                        const [rows] = await this.connection.query(sql, values);
+                        return rows;
 
                     } catch (error) {
                         if (error instanceof SchemaError) {

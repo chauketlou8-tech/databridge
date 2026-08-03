@@ -3,7 +3,6 @@ import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getSqliteType } from "./Types";
 import { Schema } from "../../schema";
-import { Document } from "../../model"
 
 /**
  * SQLite query handler class
@@ -62,7 +61,7 @@ export default class SqliteQuery extends BaseQuery {
                             });
 
                             if (tables && tables.length > 0) {
-                                throw new SchemaError(`Table "${this.tableName}" already exists`, "D043");
+                                throw new SchemaError(`Table "${this.tableName}" already exists", "D043"`);
                             }
 
                             // Build CREATE TABLE query
@@ -126,27 +125,57 @@ export default class SqliteQuery extends BaseQuery {
                             });
                         }
 
-                        // Handle where clause
+                        // Handle where clause with operators
                         const lookUps = Object.entries(this.data!.where);
-                        const results: Document[] = [];
+                        let whereClauses: string[] = [];
+                        let values: any[] = [];
 
-                        for (const lookUp of lookUps) {
-                            const [key, value] = lookUp;
-
-                            const rows = await new Promise<any>((resolve, reject) => {
-                                this.connection.all(
-                                    `select * from ${this.tableName} where "${key}" = ?`,
-                                    [value],
-                                    (err: any, rows: any) => {
-                                        if (err) reject(err);
-                                        else resolve(rows);
+                        for (const [key, value] of lookUps) {
+                            if (typeof value === "object" && value !== null) {
+                                for (const [operator, opValue] of Object.entries(value)) {
+                                    switch (operator) {
+                                        case "gte":
+                                            whereClauses.push(`"${key}" >= ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "gt":
+                                            whereClauses.push(`"${key}" > ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "lte":
+                                            whereClauses.push(`"${key}" <= ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "lt":
+                                            whereClauses.push(`"${key}" < ?`);
+                                            values.push(opValue);
+                                            break;
+                                        case "ne":
+                                            whereClauses.push(`"${key}" != ?`);
+                                            values.push(opValue);
+                                            break;
+                                        default:
+                                            whereClauses.push(`"${key}" = ?`);
+                                            values.push(opValue);
                                     }
-                                );
-                            });
-                            results.push(rows);
+                                }
+                            } else {
+                                whereClauses.push(`"${key}" = ?`);
+                                values.push(value);
+                            }
                         }
 
-                        return results.flat();
+                        const rows = await new Promise<any>((resolve, reject) => {
+                            this.connection.all(
+                                `select * from ${this.tableName} where ${whereClauses.join(' and ')}`,
+                                values,
+                                (err: any, rows: any) => {
+                                    if (err) reject(err);
+                                    else resolve(rows);
+                                }
+                            );
+                        });
+                        return rows;
 
                     } catch (error) {
                         if (error instanceof SchemaError) {

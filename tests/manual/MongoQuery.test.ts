@@ -6,7 +6,7 @@ async function run() {
 
     const db = await DataBridge.connect({
         provider: "mongodb",
-        url: "mongodb+srv://username:password@cluster.h6kymkq.mongodb.net/dbName?retryWrites=true&w=majority"
+        url: "mongodb+srv://user:password@cluster0.h6kymkq.mongodb.net/testdb?retryWrites=true&w=majority"
     });
 
     console.log("Test 1: Create collection from schema");

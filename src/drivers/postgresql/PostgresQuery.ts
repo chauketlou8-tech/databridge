@@ -4,7 +4,6 @@ import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getPostgresType } from "./Types";
 import { Schema } from "../../schema";
-import { Document } from "../../model";
 
 /**
  * PostgreSQL query handler class
@@ -91,26 +90,57 @@ export default class PostgresQuery extends BaseQuery {
                             return result.rows;
                         }
 
-                        /**
-                         * CASE 1:
-                         * Extract the lookup values from the query
-                         * e.g. if User.find({ name: "John" });
-                         * extract { name: "John" } so lookups become [name: "John"]
-                         *
-                         * TODO: other cases
-                         */
+                        // Handle where clause with operators
                         const lookUps = Object.entries(this.data!.where);
-                        const results: Document[] = [];
+                        let whereClauses: string[] = [];
+                        let values: any[] = [];
+                        let paramIndex = 1;
 
-                        for (const lookUp of lookUps) {
-                            const [key, value] = lookUp;
-
-                            const sql = `select * from "${this.tableName}" where ${key} = $1`;
-                            const result = await this.connection.query(sql, [value]);
-                            results.push(result.rows);
+                        for (const [key, value] of lookUps) {
+                            if (typeof value === "object" && value !== null) {
+                                for (const [operator, opValue] of Object.entries(value)) {
+                                    switch (operator) {
+                                        case "gte":
+                                            whereClauses.push(`"${key}" >= $${paramIndex}`);
+                                            values.push(opValue);
+                                            paramIndex++;
+                                            break;
+                                        case "gt":
+                                            whereClauses.push(`"${key}" > $${paramIndex}`);
+                                            values.push(opValue);
+                                            paramIndex++;
+                                            break;
+                                        case "lte":
+                                            whereClauses.push(`"${key}" <= $${paramIndex}`);
+                                            values.push(opValue);
+                                            paramIndex++;
+                                            break;
+                                        case "lt":
+                                            whereClauses.push(`"${key}" < $${paramIndex}`);
+                                            values.push(opValue);
+                                            paramIndex++;
+                                            break;
+                                        case "ne":
+                                            whereClauses.push(`"${key}" != $${paramIndex}`);
+                                            values.push(opValue);
+                                            paramIndex++;
+                                            break;
+                                        default:
+                                            whereClauses.push(`"${key}" = $${paramIndex}`);
+                                            values.push(opValue);
+                                            paramIndex++;
+                                    }
+                                }
+                            } else {
+                                whereClauses.push(`"${key}" = $${paramIndex}`);
+                                values.push(value);
+                                paramIndex++;
+                            }
                         }
 
-                        return results.flat();
+                        const sql = `select * from "${this.tableName}" where ${whereClauses.join(' and ')}`;
+                        const result = await this.connection.query(sql, values);
+                        return result.rows;
 
                     } catch (error) {
                         if (error instanceof SchemaError) {

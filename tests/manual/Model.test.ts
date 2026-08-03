@@ -38,8 +38,14 @@ async function run() {
 
     const users = await User.find();
     const user = await User.find({ name: "John" });
+    const UserLess = await User.find({
+        age: {
+            lte: 19
+        }
+    });
     console.log("Users:", users);
     console.log("User name John:", user);
+    console.log("User less equal to 19:", UserLess);
 }
 
 void run();

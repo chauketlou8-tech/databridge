@@ -4,7 +4,6 @@ import { ModelError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getCouchType } from "./Types";
 import { Schema } from "../../schema";
-import { Document } from "../../model";
 
 /**
  * CouchDB query handler class
@@ -61,21 +60,43 @@ export default class CouchQuery extends BaseQuery {
                             return result.rows.map((row: any) => row.doc);
                         }
 
-                        // Handle where clause
+                        // Handle where clause with operators
                         const lookUps = Object.entries(this.data!.where);
-                        const results: Document [] = [];
+                        let selector: Record<string, any> = {};
 
-                        for (const lookUp of lookUps) {
-                            const selector: Record<string, any> = {};
-                            selector[lookUp[0]] = lookUp[1];
-
-                            const result = await this.connection.find({
-                                selector: selector
-                            });
-                            results.push(result.docs);
+                        for (const [key, value] of lookUps) {
+                            if (typeof value === "object" && value !== null) {
+                                for (const [operator, opValue] of Object.entries(value)) {
+                                    switch (operator) {
+                                        case "gte":
+                                            selector[key] = { $gte: opValue };
+                                            break;
+                                        case "gt":
+                                            selector[key] = { $gt: opValue };
+                                            break;
+                                        case "lte":
+                                            selector[key] = { $lte: opValue };
+                                            break;
+                                        case "lt":
+                                            selector[key] = { $lt: opValue };
+                                            break;
+                                        case "ne":
+                                            selector[key] = { $ne: opValue };
+                                            break;
+                                        default:
+                                            selector[key] = opValue;
+                                    }
+                                }
+                            } else {
+                                selector[key] = value;
+                            }
                         }
 
-                        return results.flat();
+                        const result = await this.connection.find({
+                            selector: selector
+                        });
+                        return result.docs;
+
                     } catch (error) {
                         if (error instanceof SchemaError) {
                             throw error;

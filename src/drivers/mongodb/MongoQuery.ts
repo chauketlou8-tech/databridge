@@ -3,7 +3,6 @@ import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getBsonType } from "./Types";
 import { Schema } from "../../schema";
-import { Document } from "../../model";
 
 /**
  * MongoDB query handler class
@@ -92,20 +91,40 @@ export default class MongoQuery extends BaseQuery {
                             return await this.connection?.collection(this.collectionName).find({}).toArray();
                         }
 
-                        // Handle where clause
+                        // Handle where clause with operators
                         const lookUps = Object.entries(this.data!.where);
-                        const results: Document[] = [];
+                        let filter: Record<string, any> = {};
 
-                        for (const lookUp of lookUps) {
-                            const [key, value] = lookUp;
-                            const filter: Record<string, any> = {};
-                            filter[key] = value;
-
-                            const docs = await this.connection?.collection(this.collectionName).find(filter).toArray();
-                            results.push(docs);
+                        for (const [key, value] of lookUps) {
+                            if (typeof value === "object" && value !== null) {
+                                for (const [operator, opValue] of Object.entries(value)) {
+                                    switch (operator) {
+                                        case "gte":
+                                            filter[key] = { $gte: opValue };
+                                            break;
+                                        case "gt":
+                                            filter[key] = { $gt: opValue };
+                                            break;
+                                        case "lte":
+                                            filter[key] = { $lte: opValue };
+                                            break;
+                                        case "lt":
+                                            filter[key] = { $lt: opValue };
+                                            break;
+                                        case "ne":
+                                            filter[key] = { $ne: opValue };
+                                            break;
+                                        default:
+                                            filter[key] = opValue;
+                                    }
+                                }
+                            } else {
+                                filter[key] = value;
+                            }
                         }
 
-                        return results.flat();
+                        const docs = await this.connection?.collection(this.collectionName).find(filter).toArray();
+                        return docs;
 
                     } catch (error) {
                         if (error instanceof SchemaError) {
