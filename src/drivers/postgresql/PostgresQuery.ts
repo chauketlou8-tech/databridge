@@ -311,6 +311,221 @@ export default class PostgresQuery extends BaseQuery {
                         throw new QueryError(`Failed to query table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
                     }
 
+                case "findOne":
+                    try {
+                        // Check if table exists first
+                        const tableCheck = await this.connection.query(`select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`, [this.tableName]);
+
+                        if (!tableCheck.rows || tableCheck.rows.length === 0) {
+                            throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
+                        }
+
+                        let sql = `select * from "${this.tableName}"`;
+                        let values: any[] = [];
+                        let paramIndex = 1;
+
+                        if (this.data?.where && Object.keys(this.data.where).length > 0) {
+                            const whereClauses: string[] = [];
+
+                            // @ts-ignore
+                            if (this.data.where.or && Array.isArray(this.data.where.or)) {
+                                // @ts-ignore
+                                const orConditions = this.data.where.or;
+                                for (const condition of orConditions) {
+                                    for (const [key, val] of Object.entries(condition)) {
+                                        whereClauses.push(`"${key}" = $${paramIndex}`);
+                                        values.push(val);
+                                        paramIndex++;
+                                    }
+                                }
+                                sql += ` where ${whereClauses.join(' or ')}`;
+                            }
+                                // Handle top-level not operator
+                            // @ts-ignore
+                            else if (this.data.where.not && typeof this.data.where.not === "object") {
+                                // @ts-ignore
+                                const notConditions = this.data.where.not;
+                                for (const [key, val] of Object.entries(notConditions)) {
+                                    whereClauses.push(`"${key}" != $${paramIndex}`);
+                                    values.push(val);
+                                    paramIndex++;
+                                }
+                                sql += ` where ${whereClauses.join(' and ')}`;
+                            }
+                            // Handle regular where clause with nested operators
+                            else {
+                                const lookUps = Object.entries(this.data!.where);
+                                for (const [key, value] of lookUps) {
+                                    // Skip top-level special operators
+                                    if (key === 'or' || key === 'not' || key === 'between' || key === 'in') {
+                                        continue;
+                                    }
+
+                                    if (typeof value === "object" && value !== null) {
+                                        // Handle regex operator
+                                        if (value.regex !== undefined) {
+                                            whereClauses.push(`"${key}" ~ $${paramIndex}`);
+                                            values.push(value.regex);
+                                            paramIndex++;
+                                            continue;
+                                        }
+
+                                        // Handle startsWith
+                                        if (value.startsWith !== undefined) {
+                                            whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                            values.push(`${value.startsWith}%`);
+                                            paramIndex++;
+                                            continue;
+                                        }
+
+                                        // Handle endsWith
+                                        if (value.endsWith !== undefined) {
+                                            whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                            values.push(`%${value.endsWith}`);
+                                            paramIndex++;
+                                            continue;
+                                        }
+
+                                        // Handle contains
+                                        if (value.contains !== undefined) {
+                                            whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                            values.push(`%${value.contains}%`);
+                                            paramIndex++;
+                                            continue;
+                                        }
+
+                                        // Handle nthContain
+                                        if (value.nthContain && typeof value.nthContain === "object") {
+                                            const nthConditions = value.nthContain;
+                                            for (const [position, positionValue] of Object.entries(nthConditions)) {
+                                                let pos: number;
+                                                const posMap: Record<string, number> = {
+                                                    "first": 1,
+                                                    "second": 2,
+                                                    "third": 3,
+                                                    "fourth": 4,
+                                                    "fifth": 5
+                                                };
+
+                                                if (typeof position === "string" && posMap[position]) {
+                                                    pos = posMap[position];
+                                                } else {
+                                                    pos = parseInt(position);
+                                                }
+
+                                                if (isNaN(pos) || pos < 1) {
+                                                    throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                                                }
+
+                                                if (Array.isArray(positionValue) && positionValue.length > 0) {
+                                                    const orClauses: string[] = [];
+                                                    for (const val of positionValue) {
+                                                        const prefix = "_".repeat(pos - 1);
+                                                        orClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                                        values.push(`${prefix}${val}%`);
+                                                        paramIndex++;
+                                                    }
+                                                    whereClauses.push(`(${orClauses.join(' or ')})`);
+                                                } else if (typeof positionValue === "string") {
+                                                    const prefix = "_".repeat(pos - 1);
+                                                    whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                                    values.push(`${prefix}${positionValue}%`);
+                                                    paramIndex++;
+                                                } else {
+                                                    throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
+                                                }
+                                            }
+                                            continue;
+                                        }
+
+                                        // Handle between operator
+                                        if (value.between && Array.isArray(value.between) && value.between.length === 2) {
+                                            whereClauses.push(`"${key}" BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
+                                            values.push(value.between[0]);
+                                            values.push(value.between[1]);
+                                            paramIndex += 2;
+                                            continue;
+                                        }
+
+                                        // Handle in operator
+                                        if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+                                            const placeholders = value.in.map((_: any, index: number) => `$${paramIndex + index}`).join(", ");
+                                            whereClauses.push(`"${key}" IN (${placeholders})`);
+                                            values.push(...value.in);
+                                            paramIndex += value.in.length;
+                                            continue;
+                                        }
+
+                                        // Handle nested not operator
+                                        if (value.not !== undefined) {
+                                            whereClauses.push(`"${key}" != $${paramIndex}`);
+                                            values.push(value.not);
+                                            paramIndex++;
+                                            continue;
+                                        }
+
+                                        // Handle regular operators
+                                        for (const [operator, opValue] of Object.entries(value)) {
+                                            switch (operator) {
+                                                case "gte":
+                                                    whereClauses.push(`"${key}" >= $${paramIndex}`);
+                                                    values.push(opValue);
+                                                    paramIndex++;
+                                                    break;
+                                                case "gt":
+                                                    whereClauses.push(`"${key}" > $${paramIndex}`);
+                                                    values.push(opValue);
+                                                    paramIndex++;
+                                                    break;
+                                                case "lte":
+                                                    whereClauses.push(`"${key}" <= $${paramIndex}`);
+                                                    values.push(opValue);
+                                                    paramIndex++;
+                                                    break;
+                                                case "lt":
+                                                    whereClauses.push(`"${key}" < $${paramIndex}`);
+                                                    values.push(opValue);
+                                                    paramIndex++;
+                                                    break;
+                                                case "ne":
+                                                    whereClauses.push(`"${key}" != $${paramIndex}`);
+                                                    values.push(opValue);
+                                                    paramIndex++;
+                                                    break;
+                                                default:
+                                                    whereClauses.push(`"${key}" = $${paramIndex}`);
+                                                    values.push(opValue);
+                                                    paramIndex++;
+                                            }
+                                        }
+                                    } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                                        whereClauses.push(`"${key}" ~ $${paramIndex}`);
+                                        values.push(value);
+                                        paramIndex++;
+                                    } else {
+                                        whereClauses.push(`"${key}" = $${paramIndex}`);
+                                        values.push(value);
+                                        paramIndex++;
+                                    }
+                                }
+
+                                if (whereClauses.length > 0) {
+                                    sql += ` where ${whereClauses.join(' and ')}`;
+                                }
+                            }
+                        }
+
+                        sql += ` limit 1`;
+                        const result = await this.connection.query(sql, values);
+                        return result.rows && result.rows.length > 0 ? result.rows[0] : null;
+
+                    } catch (error) {
+                        if (error instanceof SchemaError) {
+                            throw error;
+                        }
+                        throw new QueryError(`Failed to find one in table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+                    }
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }

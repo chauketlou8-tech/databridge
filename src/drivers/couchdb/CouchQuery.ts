@@ -299,6 +299,197 @@ export default class CouchQuery extends BaseQuery {
                         }
                         throw new QueryError(`Failed to query database "${this.databaseName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
                     }
+
+                case "findOne":
+                    try {
+                        let selector: Record<string, any> = {};
+
+                        if (!this.data?.where || Object.keys(this.data.where).length === 0) {
+                            const result = await this.connection.find({
+                                selector: {},
+                                limit: 1
+                            });
+                            return result.docs.length > 0 ? result.docs[0] : null;
+                        }
+
+                        // @ts-ignore
+                        if (this.data.where.or && Array.isArray(this.data.where.or)) {
+                            // @ts-ignore
+                            const orConditions = this.data.where.or;
+                            selector = { $or: [] };
+
+                            for (const condition of orConditions) {
+                                const orCondition: Record<string, any> = {};
+                                for (const [key, value] of Object.entries(condition)) {
+                                    orCondition[key] = value;
+                                }
+                                selector.$or.push(orCondition);
+                            }
+
+                            const result = await this.connection.find({
+                                selector: selector,
+                                limit: 1
+                            });
+                            return result.docs.length > 0 ? result.docs[0] : null;
+                        }
+
+                        // Handle top-level not operator
+                        // @ts-ignore
+                        if (this.data.where.not && typeof this.data.where.not === "object") {
+                            // @ts-ignore
+                            const notConditions = this.data.where.not;
+                            selector = {};
+
+                            for (const [key, value] of Object.entries(notConditions)) {
+                                selector[key] = { $ne: value };
+                            }
+
+                            const result = await this.connection.find({
+                                selector: selector,
+                                limit: 1
+                            });
+                            return result.docs.length > 0 ? result.docs[0] : null;
+                        }
+
+                        // Handle regular where clause with operators
+                        const lookUps = Object.entries(this.data!.where);
+                        selector = {};
+
+                        for (const [key, value] of lookUps) {
+                            // Skip top-level special operators
+                            if (key === 'or' || key === 'not' || key === 'between' || key === 'in') {
+                                continue;
+                            }
+
+                            if (typeof value === "object" && value !== null) {
+                                // Handle regex operator
+                                if (value.regex !== undefined) {
+                                    selector[key] = { $regex: value.regex };
+                                    continue;
+                                }
+
+                                // Handle startsWith
+                                if (value.startsWith !== undefined) {
+                                    selector[key] = { $regex: `^${this.escapeRegex(value.startsWith)}` };
+                                    continue;
+                                }
+
+                                // Handle endsWith
+                                if (value.endsWith !== undefined) {
+                                    selector[key] = { $regex: `${this.escapeRegex(value.endsWith)}$` };
+                                    continue;
+                                }
+
+                                // Handle contains
+                                if (value.contains !== undefined) {
+                                    selector[key] = { $regex: this.escapeRegex(value.contains) };
+                                    continue;
+                                }
+
+                                // Handle nthContain
+                                if (value.nthContain && typeof value.nthContain === "object") {
+                                    const nthConditions = value.nthContain;
+                                    const orConditions: Record<string, any>[] = [];
+
+                                    for (const [position, positionValue] of Object.entries(nthConditions)) {
+                                        let pos: number;
+                                        const posMap: Record<string, number> = {
+                                            "first": 1,
+                                            "second": 2,
+                                            "third": 3,
+                                            "fourth": 4,
+                                            "fifth": 5
+                                        };
+
+                                        if (typeof position === "string" && posMap[position]) {
+                                            pos = posMap[position];
+                                        } else {
+                                            pos = parseInt(position);
+                                        }
+
+                                        if (isNaN(pos) || pos < 1) {
+                                            throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                                        }
+
+                                        if (Array.isArray(positionValue) && positionValue.length > 0) {
+                                            for (const val of positionValue) {
+                                                const pattern = this.buildPositionRegex(pos, val);
+                                                orConditions.push({ [key]: { $regex: pattern } });
+                                            }
+                                        } else if (typeof positionValue === "string") {
+                                            const pattern = this.buildPositionRegex(pos, positionValue);
+                                            orConditions.push({ [key]: { $regex: pattern } });
+                                        } else {
+                                            throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
+                                        }
+                                    }
+
+                                    if (orConditions.length > 0) {
+                                        selector = { $or: orConditions };
+                                    }
+                                    continue;
+                                }
+
+                                // Handle between operator
+                                if (value.between && Array.isArray(value.between) && value.between.length === 2) {
+                                    selector[key] = { $gte: value.between[0], $lte: value.between[1] };
+                                    continue;
+                                }
+
+                                // Handle in operator
+                                if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+                                    selector[key] = { $in: value.in };
+                                    continue;
+                                }
+
+                                // Handle nested not operator
+                                if (value.not !== undefined) {
+                                    selector[key] = { $ne: value.not };
+                                    continue;
+                                }
+
+                                // Handle regular operators
+                                for (const [operator, opValue] of Object.entries(value)) {
+                                    switch (operator) {
+                                        case "gte":
+                                            selector[key] = { $gte: opValue };
+                                            break;
+                                        case "gt":
+                                            selector[key] = { $gt: opValue };
+                                            break;
+                                        case "lte":
+                                            selector[key] = { $lte: opValue };
+                                            break;
+                                        case "lt":
+                                            selector[key] = { $lt: opValue };
+                                            break;
+                                        case "ne":
+                                            selector[key] = { $ne: opValue };
+                                            break;
+                                        default:
+                                            selector[key] = opValue;
+                                    }
+                                }
+                            } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                                selector[key] = { $regex: value };
+                            } else {
+                                selector[key] = value;
+                            }
+                        }
+
+                        const result = await this.connection.find({
+                            selector: selector,
+                            limit: 1
+                        });
+                        return result.docs.length > 0 ? result.docs[0] : null;
+
+                    } catch (error) {
+                        if (error instanceof SchemaError) {
+                            throw error;
+                        }
+                        throw new QueryError(`Failed to find one in database "${this.databaseName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+                    }
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
@@ -315,9 +506,6 @@ export default class CouchQuery extends BaseQuery {
     }
 
     private buildPositionRegex(position: number, value: string): string {
-        // Build regex for position matching
-        // e.g., position 2, value "o" -> ^.{1}o
-        // position 3, value "h" -> ^.{2}h
         const escapedValue = this.escapeRegex(value);
         return `^.{${position - 1}}${escapedValue}`;
     }

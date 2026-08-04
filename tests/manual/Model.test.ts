@@ -2,11 +2,8 @@ import { DataBridge, Schema } from "../../src";
 
 async function run() {
     const db = await DataBridge.connect({
-        provider: "mariadb",
-        host: "localhost",
-        user: "root",
-        password: "TemaSecondary0909@",
-        database: "testdb"
+        provider: "sqlite",
+        filename: "testQ.db"
     });
 
     const User = await db.model(
@@ -37,56 +34,56 @@ async function run() {
         age: 19
     });
 
-    console.log("User created");
+    console.log("Users created");
 
-    const users = await User.find();
-    const user = await User.find({ name: "John" });
-    const UserLess = await User.find({
+    const users = await User.findOne();
+    const user = await User.findOne({ name: "John" });
+    const UserLess = await User.findOne({
         age: {
             lte: 19
         }
     });
 
-    const userOr = await User.find({
+    const userOr = await User.findOne({
         or: [
             { name: "John" },
             { name: "David" }
         ]
     });
 
-    const notUser = await User.find({
+    const notUser = await User.findOne({
         not: {
             name: "John"
         }
     });
 
-    const betweenUser = await User.find({
+    const betweenUser = await User.findOne({
         age: {
             between: [20, 30]
         }
     });
 
-    const inUser = await User.find({
+    const inUser = await User.findOne({
         name: {
             in: ["David", "Tlou Elvis Chauke"]
         }
     });
 
-    const startUser = await User.find({
+    const startUser = await User.findOne({
         name: {
             startsWith: "J"
         }
     });
 
-    const endUser = await User.find({ name: { endsWith: "n" } });
+    const endUser = await User.findOne({ name: { endsWith: "n" } });
 
-    const containUser = await User.find({ name: { contains: "oh" } });
+    const containUser = await User.findOne({ name: { contains: "oh" } });
 
-    const nthContainUser = await User.find({ name: { nthContain: { second: "o" } } });
+    const nthContainUser = await User.findOne({ name: { nthContain: { second: "o" } } });
 
-    const nthContainPUser = await User.find({ name: { nthContain: { second: ["l", "a"], third: ["o", "a"] } } });
+    const nthContainPUser = await User.findOne({ name: { nthContain: { second: ["l", "a"], third: ["o", "a"] } } });
 
-    const regexUser = await User.find({
+    const regexUser = await User.findOne({
         email: ".*@gmail.com"
     })
 

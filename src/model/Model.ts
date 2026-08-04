@@ -124,6 +124,19 @@ export class Model implements MDL {
         return await this.driver.query(findQuery);
     }
 
+    public async findOne(where?: Record<string, unknown>): Promise<Document> {
+        const findOneQuery: Query = {
+            operation: "findOne",
+            type: "document",
+            data: {
+                name: this.name,
+                where
+            }
+        }
+
+        return await this.driver.query(findOneQuery);
+    }
+
     /**
      * Creates the database table/collection for this model
      * @param Schema - The schema definition

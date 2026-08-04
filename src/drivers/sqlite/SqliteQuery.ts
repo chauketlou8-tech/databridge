@@ -187,32 +187,31 @@ export default class SqliteQuery extends BaseQuery {
                             }
 
                             if (typeof value === "object" && value !== null) {
-                                // Handle regex operator (SQLite uses GLOB or REGEXP)
+                                // Handle regex operator - convert regex to SQLite LIKE pattern
                                 if (value.regex !== undefined) {
-                                    // SQLite requires REGEXP extension, use LIKE with % as fallback
-                                    // Using GLOB for basic pattern matching
-                                    whereClauses.push(`"${key}" GLOB ?`);
-                                    values.push(this.globifyRegex(value.regex));
+                                    const likePattern = this.regexToLike(value.regex);
+                                    whereClauses.push(`"${key}" LIKE ?`);
+                                    values.push(likePattern);
                                     continue;
                                 }
 
                                 // Handle startsWith
                                 if (value.startsWith !== undefined) {
-                                    whereClauses.push(`"${key}" like ?`);
+                                    whereClauses.push(`"${key}" LIKE ?`);
                                     values.push(`${value.startsWith}%`);
                                     continue;
                                 }
 
                                 // Handle endsWith
                                 if (value.endsWith !== undefined) {
-                                    whereClauses.push(`"${key}" like ?`);
+                                    whereClauses.push(`"${key}" LIKE ?`);
                                     values.push(`%${value.endsWith}`);
                                     continue;
                                 }
 
                                 // Handle contains
                                 if (value.contains !== undefined) {
-                                    whereClauses.push(`"${key}" like ?`);
+                                    whereClauses.push(`"${key}" LIKE ?`);
                                     values.push(`%${value.contains}%`);
                                     continue;
                                 }
@@ -261,7 +260,7 @@ export default class SqliteQuery extends BaseQuery {
 
                                 // Handle between operator
                                 if (value.between && Array.isArray(value.between) && value.between.length === 2) {
-                                    whereClauses.push(`"${key}" between ? and ?`);
+                                    whereClauses.push(`"${key}" BETWEEN ? AND ?`);
                                     values.push(value.between[0]);
                                     values.push(value.between[1]);
                                     continue;
@@ -270,7 +269,7 @@ export default class SqliteQuery extends BaseQuery {
                                 // Handle in operator
                                 if (value.in && Array.isArray(value.in) && value.in.length > 0) {
                                     const placeholders = value.in.map(() => "?").join(", ");
-                                    whereClauses.push(`"${key}" in (${placeholders})`);
+                                    whereClauses.push(`"${key}" IN (${placeholders})`);
                                     values.push(...value.in);
                                     continue;
                                 }
@@ -312,8 +311,9 @@ export default class SqliteQuery extends BaseQuery {
                                 }
                             } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
                                 // Handle string values that look like regex patterns
-                                whereClauses.push(`"${key}" GLOB ?`);
-                                values.push(this.globifyRegex(value));
+                                const likePattern = this.regexToLike(value);
+                                whereClauses.push(`"${key}" LIKE ?`);
+                                values.push(likePattern);
                             } else {
                                 whereClauses.push(`"${key}" = ?`);
                                 values.push(value);
@@ -351,6 +351,217 @@ export default class SqliteQuery extends BaseQuery {
                         throw new QueryError(`Failed to query table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
                     }
 
+                case "findOne":
+                    try {
+                        // Check if table exists
+                        const tableCheck = await new Promise<any>((resolve, reject) => {
+                            this.connection.all(
+                                `select name from sqlite_master where type='table' and name=?`,
+                                [this.tableName],
+                                (err: any, rows: any) => {
+                                    if (err) reject(err);
+                                    else resolve(rows);
+                                }
+                            );
+                        });
+
+                        if (!tableCheck || tableCheck.length === 0) {
+                            throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
+                        }
+
+                        let sql = `select * from ${this.tableName}`;
+                        let values: any[] = [];
+
+                        if (this.data?.where && Object.keys(this.data.where).length > 0) {
+                            const whereClauses: string[] = [];
+
+                            // @ts-ignore
+                            if (this.data.where.or && Array.isArray(this.data.where.or)) {
+                                // @ts-ignore
+                                const orConditions = this.data.where.or;
+                                for (const condition of orConditions) {
+                                    for (const [key, val] of Object.entries(condition)) {
+                                        whereClauses.push(`"${key}" = ?`);
+                                        values.push(val);
+                                    }
+                                }
+                                sql += ` where ${whereClauses.join(' or ')}`;
+                            }
+                                // Handle top-level not operator
+                            // @ts-ignore
+                            else if (this.data.where.not && typeof this.data.where.not === "object") {
+                                // @ts-ignore
+                                const notConditions = this.data.where.not;
+                                for (const [key, val] of Object.entries(notConditions)) {
+                                    whereClauses.push(`"${key}" != ?`);
+                                    values.push(val);
+                                }
+                                sql += ` where ${whereClauses.join(' and ')}`;
+                            }
+                            // Handle regular where clause with nested operators
+                            else {
+                                const lookUps = Object.entries(this.data!.where);
+                                for (const [key, value] of lookUps) {
+                                    // Skip top-level special operators
+                                    if (key === 'or' || key === 'not' || key === 'between' || key === 'in') {
+                                        continue;
+                                    }
+
+                                    if (typeof value === "object" && value !== null) {
+                                        // Handle regex operator
+                                        if (value.regex !== undefined) {
+                                            const likePattern = this.regexToLike(value.regex);
+                                            whereClauses.push(`"${key}" LIKE ?`);
+                                            values.push(likePattern);
+                                            continue;
+                                        }
+
+                                        // Handle startsWith
+                                        if (value.startsWith !== undefined) {
+                                            whereClauses.push(`"${key}" LIKE ?`);
+                                            values.push(`${value.startsWith}%`);
+                                            continue;
+                                        }
+
+                                        // Handle endsWith
+                                        if (value.endsWith !== undefined) {
+                                            whereClauses.push(`"${key}" LIKE ?`);
+                                            values.push(`%${value.endsWith}`);
+                                            continue;
+                                        }
+
+                                        // Handle contains
+                                        if (value.contains !== undefined) {
+                                            whereClauses.push(`"${key}" LIKE ?`);
+                                            values.push(`%${value.contains}%`);
+                                            continue;
+                                        }
+
+                                        // Handle nthContain
+                                        if (value.nthContain && typeof value.nthContain === "object") {
+                                            const nthConditions = value.nthContain;
+                                            for (const [position, positionValue] of Object.entries(nthConditions)) {
+                                                let pos: number;
+                                                const posMap: Record<string, number> = {
+                                                    "first": 1,
+                                                    "second": 2,
+                                                    "third": 3,
+                                                    "fourth": 4,
+                                                    "fifth": 5
+                                                };
+
+                                                if (typeof position === "string" && posMap[position]) {
+                                                    pos = posMap[position];
+                                                } else {
+                                                    pos = parseInt(position);
+                                                }
+
+                                                if (isNaN(pos) || pos < 1) {
+                                                    throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                                                }
+
+                                                if (Array.isArray(positionValue) && positionValue.length > 0) {
+                                                    const orClauses: string[] = [];
+                                                    for (const val of positionValue) {
+                                                        const prefix = "_".repeat(pos - 1);
+                                                        orClauses.push(`"${key}" LIKE ?`);
+                                                        values.push(`${prefix}${val}%`);
+                                                    }
+                                                    whereClauses.push(`(${orClauses.join(' or ')})`);
+                                                } else if (typeof positionValue === "string") {
+                                                    const prefix = "_".repeat(pos - 1);
+                                                    whereClauses.push(`"${key}" LIKE ?`);
+                                                    values.push(`${prefix}${positionValue}%`);
+                                                } else {
+                                                    throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
+                                                }
+                                            }
+                                            continue;
+                                        }
+
+                                        // Handle between operator
+                                        if (value.between && Array.isArray(value.between) && value.between.length === 2) {
+                                            whereClauses.push(`"${key}" BETWEEN ? AND ?`);
+                                            values.push(value.between[0]);
+                                            values.push(value.between[1]);
+                                            continue;
+                                        }
+
+                                        // Handle in operator
+                                        if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+                                            const placeholders = value.in.map(() => "?").join(", ");
+                                            whereClauses.push(`"${key}" IN (${placeholders})`);
+                                            values.push(...value.in);
+                                            continue;
+                                        }
+
+                                        // Handle nested not operator
+                                        if (value.not !== undefined) {
+                                            whereClauses.push(`"${key}" != ?`);
+                                            values.push(value.not);
+                                            continue;
+                                        }
+
+                                        // Handle regular operators
+                                        for (const [operator, opValue] of Object.entries(value)) {
+                                            switch (operator) {
+                                                case "gte":
+                                                    whereClauses.push(`"${key}" >= ?`);
+                                                    values.push(opValue);
+                                                    break;
+                                                case "gt":
+                                                    whereClauses.push(`"${key}" > ?`);
+                                                    values.push(opValue);
+                                                    break;
+                                                case "lte":
+                                                    whereClauses.push(`"${key}" <= ?`);
+                                                    values.push(opValue);
+                                                    break;
+                                                case "lt":
+                                                    whereClauses.push(`"${key}" < ?`);
+                                                    values.push(opValue);
+                                                    break;
+                                                case "ne":
+                                                    whereClauses.push(`"${key}" != ?`);
+                                                    values.push(opValue);
+                                                    break;
+                                                default:
+                                                    whereClauses.push(`"${key}" = ?`);
+                                                    values.push(opValue);
+                                            }
+                                        }
+                                    } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                                        const likePattern = this.regexToLike(value);
+                                        whereClauses.push(`"${key}" LIKE ?`);
+                                        values.push(likePattern);
+                                    } else {
+                                        whereClauses.push(`"${key}" = ?`);
+                                        values.push(value);
+                                    }
+                                }
+
+                                if (whereClauses.length > 0) {
+                                    sql += ` where ${whereClauses.join(' and ')}`;
+                                }
+                            }
+                        }
+
+                        sql += ` limit 1`;
+                        const rows = await new Promise<any>((resolve, reject) => {
+                            this.connection.all(sql, values, (err: any, rows: any) => {
+                                if (err) reject(err);
+                                else resolve(rows);
+                            });
+                        });
+                        return rows && rows.length > 0 ? rows[0] : null;
+
+                    } catch (error) {
+                        if (error instanceof SchemaError) {
+                            throw error;
+                        }
+                        throw new QueryError(`Failed to find one in table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+                    }
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented", "D036"`);
             }
@@ -364,19 +575,27 @@ export default class SqliteQuery extends BaseQuery {
         }
     }
 
-    private globifyRegex(regex: string): string {
-        // Convert regex-like patterns to GLOB patterns
-        // GLOB uses * for any characters, ? for single character
-        // Simple conversion - this is basic, for complex regex use REGEXP extension
-        let glob = regex;
-        // Replace .* with *
-        glob = glob.replace(/\.\*/g, '*');
-        // Replace . with ?
-        glob = glob.replace(/\./g, '?');
-        // Replace + with * (simplified)
-        glob = glob.replace(/\+/g, '*');
-        // Remove $ and ^
-        glob = glob.replace(/[^$]/g, '');
-        return glob;
+    private regexToLike(regex: string): string {
+        if (/[()[\]{}|+?\\dwWsS]/.test(regex)) {
+            throw new QueryError("Only ^, $, and .* are supported in SQLite regex searches.", "D036");
+        }
+
+        let like = regex;
+
+        like = like.replace(/\.\*/g, "%");
+
+        if (like.startsWith("^")) {
+            like = like.slice(1);
+        } else {
+            like = "%" + like;
+        }
+
+        if (like.endsWith("$")) {
+            like = like.slice(0, -1);
+        } else {
+            like = like + "%";
+        }
+
+        return like;
     }
 }
