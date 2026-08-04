@@ -132,6 +132,74 @@ export default class MongoQuery extends BaseQuery {
                             }
 
                             if (typeof value === "object" && value !== null) {
+                                // Handle regex operator
+                                if (value.regex !== undefined) {
+                                    filter[key] = { $regex: value.regex };
+                                    continue;
+                                }
+
+                                // Handle startsWith
+                                if (value.startsWith !== undefined) {
+                                    filter[key] = { $regex: `^${this.escapeRegex(value.startsWith)}` };
+                                    continue;
+                                }
+
+                                // Handle endsWith
+                                if (value.endsWith !== undefined) {
+                                    filter[key] = { $regex: `${this.escapeRegex(value.endsWith)}$` };
+                                    continue;
+                                }
+
+                                // Handle contains
+                                if (value.contains !== undefined) {
+                                    filter[key] = { $regex: this.escapeRegex(value.contains) };
+                                    continue;
+                                }
+
+                                // Handle nthContain - specific position
+                                if (value.nthContain && typeof value.nthContain === "object") {
+                                    const nthConditions = value.nthContain;
+                                    const orConditions: Record<string, any>[] = [];
+
+                                    for (const [position, positionValue] of Object.entries(nthConditions)) {
+                                        let pos: number;
+                                        const posMap: Record<string, number> = {
+                                            "first": 1,
+                                            "second": 2,
+                                            "third": 3,
+                                            "fourth": 4,
+                                            "fifth": 5
+                                        };
+
+                                        if (typeof position === "string" && posMap[position]) {
+                                            pos = posMap[position];
+                                        } else {
+                                            pos = parseInt(position);
+                                        }
+
+                                        if (isNaN(pos) || pos < 1) {
+                                            throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                                        }
+
+                                        if (Array.isArray(positionValue) && positionValue.length > 0) {
+                                            for (const val of positionValue) {
+                                                const pattern = this.buildPositionRegex(pos, val);
+                                                orConditions.push({ [key]: { $regex: pattern } });
+                                            }
+                                        } else if (typeof positionValue === "string") {
+                                            const pattern = this.buildPositionRegex(pos, positionValue);
+                                            orConditions.push({ [key]: { $regex: pattern } });
+                                        } else {
+                                            throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
+                                        }
+                                    }
+
+                                    if (orConditions.length > 0) {
+                                        filter = { $or: orConditions };
+                                    }
+                                    continue;
+                                }
+
                                 // Handle between operator
                                 if (value.between && Array.isArray(value.between) && value.between.length === 2) {
                                     filter[key] = { $gte: value.between[0], $lte: value.between[1] };
@@ -172,6 +240,9 @@ export default class MongoQuery extends BaseQuery {
                                             filter[key] = opValue;
                                     }
                                 }
+                            } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                                // Handle string values that look like regex patterns
+                                filter[key] = { $regex: value };
                             } else {
                                 filter[key] = value;
                             }
@@ -197,5 +268,14 @@ export default class MongoQuery extends BaseQuery {
             // Wrap unknown errors
             throw new QueryError(`MongoDB query failed: ${error instanceof Error ? error.message : String(error)}`, "D031");
         }
+    }
+
+    private escapeRegex(str: string): string {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    private buildPositionRegex(position: number, value: string): string {
+        const escapedValue = this.escapeRegex(value);
+        return `^.{${position - 1}}${escapedValue}`;
     }
 }

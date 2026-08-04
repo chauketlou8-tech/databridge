@@ -2,8 +2,11 @@ import { DataBridge, Schema } from "../../src";
 
 async function run() {
     const db = await DataBridge.connect({
-        provider: "sqlite",
-        filename: "testQ.db"
+        provider: "mariadb",
+        host: "localhost",
+        user: "root",
+        password: "TemaSecondary0909@",
+        database: "testdb"
     });
 
     const User = await db.model(
@@ -67,6 +70,24 @@ async function run() {
         name: {
             in: ["David", "Tlou Elvis Chauke"]
         }
+    });
+
+    const startUser = await User.find({
+        name: {
+            startsWith: "J"
+        }
+    });
+
+    const endUser = await User.find({ name: { endsWith: "n" } });
+
+    const containUser = await User.find({ name: { contains: "oh" } });
+
+    const nthContainUser = await User.find({ name: { nthContain: { second: "o" } } });
+
+    const nthContainPUser = await User.find({ name: { nthContain: { second: ["l", "a"], third: ["o", "a"] } } });
+
+    const regexUser = await User.find({
+        email: ".*@gmail.com"
     })
 
     console.log("Users:", users);
@@ -76,6 +97,12 @@ async function run() {
     console.log("Not users:", notUser);
     console.log("Between users:", betweenUser);
     console.log("InUser:", inUser);
+    console.log("Starting User:", startUser);
+    console.log("Ending User:", endUser);
+    console.log("ContainUser:", containUser);
+    console.log("nthContainUser:", nthContainUser);
+    console.log("nthContainPUser:", nthContainPUser);
+    console.log("RegexUser:", regexUser);
 }
 
 void run();

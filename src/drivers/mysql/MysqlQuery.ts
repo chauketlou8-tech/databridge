@@ -139,6 +139,76 @@ export default class MysqlQuery extends BaseQuery {
                             }
 
                             if (typeof value === "object" && value !== null) {
+                                // Handle regex operator
+                                if (value.regex !== undefined) {
+                                    whereClauses.push(`\`${key}\` REGEXP ?`);
+                                    values.push(value.regex);
+                                    continue;
+                                }
+
+                                // Handle startsWith
+                                if (value.startsWith !== undefined) {
+                                    whereClauses.push(`\`${key}\` LIKE ?`);
+                                    values.push(`${value.startsWith}%`);
+                                    continue;
+                                }
+
+                                // Handle endsWith
+                                if (value.endsWith !== undefined) {
+                                    whereClauses.push(`\`${key}\` LIKE ?`);
+                                    values.push(`%${value.endsWith}`);
+                                    continue;
+                                }
+
+                                // Handle contains
+                                if (value.contains !== undefined) {
+                                    whereClauses.push(`\`${key}\` LIKE ?`);
+                                    values.push(`%${value.contains}%`);
+                                    continue;
+                                }
+
+                                // Handle nthContain - specific position
+                                if (value.nthContain && typeof value.nthContain === "object") {
+                                    const nthConditions = value.nthContain;
+                                    for (const [position, positionValue] of Object.entries(nthConditions)) {
+                                        let pos: number;
+                                        const posMap: Record<string, number> = {
+                                            "first": 1,
+                                            "second": 2,
+                                            "third": 3,
+                                            "fourth": 4,
+                                            "fifth": 5
+                                        };
+
+                                        if (typeof position === "string" && posMap[position]) {
+                                            pos = posMap[position];
+                                        } else {
+                                            pos = parseInt(position);
+                                        }
+
+                                        if (isNaN(pos) || pos < 1) {
+                                            throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                                        }
+
+                                        if (Array.isArray(positionValue) && positionValue.length > 0) {
+                                            const orClauses: string[] = [];
+                                            for (const val of positionValue) {
+                                                const prefix = "_".repeat(pos - 1);
+                                                orClauses.push(`\`${key}\` LIKE ?`);
+                                                values.push(`${prefix}${val}%`);
+                                            }
+                                            whereClauses.push(`(${orClauses.join(' or ')})`);
+                                        } else if (typeof positionValue === "string") {
+                                            const prefix = "_".repeat(pos - 1);
+                                            whereClauses.push(`\`${key}\` LIKE ?`);
+                                            values.push(`${prefix}${positionValue}%`);
+                                        } else {
+                                            throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
+                                        }
+                                    }
+                                    continue;
+                                }
+
                                 // Handle between operator
                                 if (value.between && Array.isArray(value.between) && value.between.length === 2) {
                                     whereClauses.push(`\`${key}\` between ? and ?`);
@@ -190,6 +260,10 @@ export default class MysqlQuery extends BaseQuery {
                                             values.push(opValue);
                                     }
                                 }
+                            } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                                // Handle string values that look like regex patterns
+                                whereClauses.push(`\`${key}\` REGEXP ?`);
+                                values.push(value);
                             } else {
                                 whereClauses.push(`\`${key}\` = ?`);
                                 values.push(value);

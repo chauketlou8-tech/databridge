@@ -145,9 +145,85 @@ export default class PostgresQuery extends BaseQuery {
                             }
 
                             if (typeof value === "object" && value !== null) {
+                                // Handle regex operator
+                                if (value.regex !== undefined) {
+                                    whereClauses.push(`"${key}" ~ $${paramIndex}`);
+                                    values.push(value.regex);
+                                    paramIndex++;
+                                    continue;
+                                }
+
+                                // Handle startsWith
+                                if (value.startsWith !== undefined) {
+                                    whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                    values.push(`${value.startsWith}%`);
+                                    paramIndex++;
+                                    continue;
+                                }
+
+                                // Handle endsWith
+                                if (value.endsWith !== undefined) {
+                                    whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                    values.push(`%${value.endsWith}`);
+                                    paramIndex++;
+                                    continue;
+                                }
+
+                                // Handle contains
+                                if (value.contains !== undefined) {
+                                    whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                    values.push(`%${value.contains}%`);
+                                    paramIndex++;
+                                    continue;
+                                }
+
+                                // Handle nthContain - specific position
+                                if (value.nthContain && typeof value.nthContain === "object") {
+                                    const nthConditions = value.nthContain;
+                                    for (const [position, positionValue] of Object.entries(nthConditions)) {
+                                        let pos: number;
+                                        const posMap: Record<string, number> = {
+                                            "first": 1,
+                                            "second": 2,
+                                            "third": 3,
+                                            "fourth": 4,
+                                            "fifth": 5
+                                        };
+
+                                        if (typeof position === "string" && posMap[position]) {
+                                            pos = posMap[position];
+                                        } else {
+                                            pos = parseInt(position);
+                                        }
+
+                                        if (isNaN(pos) || pos < 1) {
+                                            throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                                        }
+
+                                        if (Array.isArray(positionValue) && positionValue.length > 0) {
+                                            const orClauses: string[] = [];
+                                            for (const val of positionValue) {
+                                                const prefix = "_".repeat(pos - 1);
+                                                orClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                                values.push(`${prefix}${val}%`);
+                                                paramIndex++;
+                                            }
+                                            whereClauses.push(`(${orClauses.join(' or ')})`);
+                                        } else if (typeof positionValue === "string") {
+                                            const prefix = "_".repeat(pos - 1);
+                                            whereClauses.push(`"${key}" LIKE $${paramIndex}`);
+                                            values.push(`${prefix}${positionValue}%`);
+                                            paramIndex++;
+                                        } else {
+                                            throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
+                                        }
+                                    }
+                                    continue;
+                                }
+
                                 // Handle between operator
                                 if (value.between && Array.isArray(value.between) && value.between.length === 2) {
-                                    whereClauses.push(`"${key}"between $${paramIndex} and $${paramIndex + 1}`);
+                                    whereClauses.push(`"${key}" BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
                                     values.push(value.between[0]);
                                     values.push(value.between[1]);
                                     paramIndex += 2;
@@ -157,7 +233,7 @@ export default class PostgresQuery extends BaseQuery {
                                 // Handle in operator
                                 if (value.in && Array.isArray(value.in) && value.in.length > 0) {
                                     const placeholders = value.in.map((_: any, index: number) => `$${paramIndex + index}`).join(", ");
-                                    whereClauses.push(`"${key}" in (${placeholders})`);
+                                    whereClauses.push(`"${key}" IN (${placeholders})`);
                                     values.push(...value.in);
                                     paramIndex += value.in.length;
                                     continue;
@@ -205,6 +281,11 @@ export default class PostgresQuery extends BaseQuery {
                                             paramIndex++;
                                     }
                                 }
+                            } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                                // Handle string values that look like regex patterns
+                                whereClauses.push(`"${key}" ~ $${paramIndex}`);
+                                values.push(value);
+                                paramIndex++;
                             } else {
                                 whereClauses.push(`"${key}" = $${paramIndex}`);
                                 values.push(value);

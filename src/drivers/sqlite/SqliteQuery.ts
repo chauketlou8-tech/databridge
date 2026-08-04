@@ -187,6 +187,78 @@ export default class SqliteQuery extends BaseQuery {
                             }
 
                             if (typeof value === "object" && value !== null) {
+                                // Handle regex operator (SQLite uses GLOB or REGEXP)
+                                if (value.regex !== undefined) {
+                                    // SQLite requires REGEXP extension, use LIKE with % as fallback
+                                    // Using GLOB for basic pattern matching
+                                    whereClauses.push(`"${key}" GLOB ?`);
+                                    values.push(this.globifyRegex(value.regex));
+                                    continue;
+                                }
+
+                                // Handle startsWith
+                                if (value.startsWith !== undefined) {
+                                    whereClauses.push(`"${key}" like ?`);
+                                    values.push(`${value.startsWith}%`);
+                                    continue;
+                                }
+
+                                // Handle endsWith
+                                if (value.endsWith !== undefined) {
+                                    whereClauses.push(`"${key}" like ?`);
+                                    values.push(`%${value.endsWith}`);
+                                    continue;
+                                }
+
+                                // Handle contains
+                                if (value.contains !== undefined) {
+                                    whereClauses.push(`"${key}" like ?`);
+                                    values.push(`%${value.contains}%`);
+                                    continue;
+                                }
+
+                                // Handle nthContain - specific position
+                                if (value.nthContain && typeof value.nthContain === "object") {
+                                    const nthConditions = value.nthContain;
+                                    for (const [position, positionValue] of Object.entries(nthConditions)) {
+                                        let pos: number;
+                                        const posMap: Record<string, number> = {
+                                            "first": 1,
+                                            "second": 2,
+                                            "third": 3,
+                                            "fourth": 4,
+                                            "fifth": 5
+                                        };
+
+                                        if (typeof position === "string" && posMap[position]) {
+                                            pos = posMap[position];
+                                        } else {
+                                            pos = parseInt(position);
+                                        }
+
+                                        if (isNaN(pos) || pos < 1) {
+                                            throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                                        }
+
+                                        if (Array.isArray(positionValue) && positionValue.length > 0) {
+                                            const orClauses: string[] = [];
+                                            for (const val of positionValue) {
+                                                const prefix = "_".repeat(pos - 1);
+                                                orClauses.push(`"${key}" LIKE ?`);
+                                                values.push(`${prefix}${val}%`);
+                                            }
+                                            whereClauses.push(`(${orClauses.join(' or ')})`);
+                                        } else if (typeof positionValue === "string") {
+                                            const prefix = "_".repeat(pos - 1);
+                                            whereClauses.push(`"${key}" LIKE ?`);
+                                            values.push(`${prefix}${positionValue}%`);
+                                        } else {
+                                            throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
+                                        }
+                                    }
+                                    continue;
+                                }
+
                                 // Handle between operator
                                 if (value.between && Array.isArray(value.between) && value.between.length === 2) {
                                     whereClauses.push(`"${key}" between ? and ?`);
@@ -238,6 +310,10 @@ export default class SqliteQuery extends BaseQuery {
                                             values.push(opValue);
                                     }
                                 }
+                            } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                                // Handle string values that look like regex patterns
+                                whereClauses.push(`"${key}" GLOB ?`);
+                                values.push(this.globifyRegex(value));
                             } else {
                                 whereClauses.push(`"${key}" = ?`);
                                 values.push(value);
@@ -286,5 +362,21 @@ export default class SqliteQuery extends BaseQuery {
             // Wrap unknown errors
             throw new QueryError(`SQLite query failed: ${error instanceof Error ? error.message : String(error)}`, "D031");
         }
+    }
+
+    private globifyRegex(regex: string): string {
+        // Convert regex-like patterns to GLOB patterns
+        // GLOB uses * for any characters, ? for single character
+        // Simple conversion - this is basic, for complex regex use REGEXP extension
+        let glob = regex;
+        // Replace .* with *
+        glob = glob.replace(/\.\*/g, '*');
+        // Replace . with ?
+        glob = glob.replace(/\./g, '?');
+        // Replace + with * (simplified)
+        glob = glob.replace(/\+/g, '*');
+        // Remove $ and ^
+        glob = glob.replace(/[^$]/g, '');
+        return glob;
     }
 }
