@@ -2,11 +2,8 @@ import { DataBridge, Schema } from "../../src";
 
 async function run() {
     const db = await DataBridge.connect({
-        provider: "mariadb",
-        host: "localhost",
-        user: "root",
-        password: "TemaSecondary0909@",
-        database: "testdb"
+        provider: "sqlite",
+        filename: "testQ.db"
     });
 
     const User = await db.model(
@@ -58,13 +55,27 @@ async function run() {
         not: {
             name: "John"
         }
+    });
+
+    const betweenUser = await User.find({
+        age: {
+            between: [20, 30]
+        }
+    });
+
+    const inUser = await User.find({
+        name: {
+            in: ["David", "Tlou Elvis Chauke"]
+        }
     })
 
     console.log("Users:", users);
     console.log("User name John:", user);
     console.log("User less equal to 19:", UserLess);
     console.log("Or query users:", userOr);
-    console.log("No users:", notUser);
+    console.log("Not users:", notUser);
+    console.log("Between users:", betweenUser);
+    console.log("InUser:", inUser);
 }
 
 void run();

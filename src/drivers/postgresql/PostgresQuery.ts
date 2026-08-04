@@ -112,7 +112,7 @@ export default class PostgresQuery extends BaseQuery {
                             return result.rows;
                         }
 
-                        // Handle not operator
+                        // Handle top-level not operator
                         // @ts-ignore
                         if (this.data.where.not && typeof this.data.where.not === "object") {
                             // @ts-ignore
@@ -132,14 +132,46 @@ export default class PostgresQuery extends BaseQuery {
                             return result.rows;
                         }
 
-                        // Handle where clause with operators
+                        // Handle regular where clause with nested operators
                         const lookUps = Object.entries(this.data!.where);
                         let whereClauses: string[] = [];
                         let values: any[] = [];
                         let paramIndex = 1;
 
                         for (const [key, value] of lookUps) {
+                            // Skip top-level special operators that were already handled
+                            if (key === 'or' || key === 'not' || key === 'between' || key === 'in') {
+                                continue;
+                            }
+
                             if (typeof value === "object" && value !== null) {
+                                // Handle between operator
+                                if (value.between && Array.isArray(value.between) && value.between.length === 2) {
+                                    whereClauses.push(`"${key}"between $${paramIndex} and $${paramIndex + 1}`);
+                                    values.push(value.between[0]);
+                                    values.push(value.between[1]);
+                                    paramIndex += 2;
+                                    continue;
+                                }
+
+                                // Handle in operator
+                                if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+                                    const placeholders = value.in.map((_: any, index: number) => `$${paramIndex + index}`).join(", ");
+                                    whereClauses.push(`"${key}" in (${placeholders})`);
+                                    values.push(...value.in);
+                                    paramIndex += value.in.length;
+                                    continue;
+                                }
+
+                                // Handle nested not operator
+                                if (value.not !== undefined) {
+                                    whereClauses.push(`"${key}" != $${paramIndex}`);
+                                    values.push(value.not);
+                                    paramIndex++;
+                                    continue;
+                                }
+
+                                // Handle regular operators
                                 for (const [operator, opValue] of Object.entries(value)) {
                                     switch (operator) {
                                         case "gte":
@@ -180,8 +212,15 @@ export default class PostgresQuery extends BaseQuery {
                             }
                         }
 
-                        const sql = `select * from "${this.tableName}" where ${whereClauses.join(' and ')}`;
-                        const result = await this.connection.query(sql, values);
+                        if (whereClauses.length > 0) {
+                            const sql = `select * from "${this.tableName}" where ${whereClauses.join(' and ')}`;
+                            const result = await this.connection.query(sql, values);
+                            return result.rows;
+                        }
+
+                        // If no where clauses, return all
+                        const sql = `select * from "${this.tableName}"`;
+                        const result = await this.connection.query(sql);
                         return result.rows;
 
                     } catch (error) {

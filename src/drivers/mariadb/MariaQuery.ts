@@ -1,8 +1,7 @@
-import type {Query} from "../../types/query";
-import {ModelError, QueryError, SchemaError} from "../../exceptions";
+import type { Query } from "../../types/query";
+import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import {getMariaType} from "./Types";
-import {Schema} from "../../schema";
+import { getMariaType } from "./Types";
 
 /**
  * MariaDB query handler class
@@ -105,7 +104,7 @@ export default class MariaQuery extends BaseQuery {
                             return await this.connection.query(sql, values);
                         }
 
-                        // Handle not operator
+                        // Handle top-level not operator
                         // @ts-ignore
                         if (this.data.where.not && typeof this.data.where.not === "object") {
                             // @ts-ignore
@@ -122,13 +121,42 @@ export default class MariaQuery extends BaseQuery {
                             return await this.connection.query(sql, values);
                         }
 
-                        // Handle where clause
+                        // Handle regular where clause with nested operators
                         const lookUps = Object.entries(this.data!.where);
                         let whereClauses: string[] = [];
                         let values: any[] = [];
 
                         for (const [key, value] of lookUps) {
+                            // Skip top-level special operators that were already handled
+                            if (key === 'or' || key === 'not' || key === 'between' || key === 'in') {
+                                continue;
+                            }
+
                             if (typeof value === "object" && value !== null) {
+                                // Handle between operator
+                                if (value.between && Array.isArray(value.between) && value.between.length === 2) {
+                                    whereClauses.push(`\`${key}\` between ? and ?`);
+                                    values.push(value.between[0]);
+                                    values.push(value.between[1]);
+                                    continue;
+                                }
+
+                                // Handle in operator
+                                if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+                                    const placeholders = value.in.map(() => "?").join(", ");
+                                    whereClauses.push(`\`${key}\` in (${placeholders})`);
+                                    values.push(...value.in);
+                                    continue;
+                                }
+
+                                // Handle nested not operator (not: value)
+                                if (value.not !== undefined) {
+                                    whereClauses.push(`\`${key}\` != ?`);
+                                    values.push(value.not);
+                                    continue;
+                                }
+
+                                // Handle regular operators
                                 for (const [operator, opValue] of Object.entries(value)) {
                                     switch (operator) {
                                         case "gte":
@@ -157,13 +185,20 @@ export default class MariaQuery extends BaseQuery {
                                     }
                                 }
                             } else {
+                                // Simple equality
                                 whereClauses.push(`\`${key}\` = ?`);
                                 values.push(value);
                             }
                         }
 
-                        const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' and ')}`;
-                        return await this.connection.query(sql, values);
+                        if (whereClauses.length > 0) {
+                            const sql = `select * from \`${this.tableName}\` where ${whereClauses.join(' and ')}`;
+                            return await this.connection.query(sql, values);
+                        }
+
+                        // If no where clauses, return all
+                        const sql = `select * from \`${this.tableName}\``;
+                        return await this.connection.query(sql);
 
                     } catch (error) {
                         if (error instanceof SchemaError) {

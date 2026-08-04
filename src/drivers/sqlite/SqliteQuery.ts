@@ -1,7 +1,7 @@
 import type { Query } from "../../types/query";
 import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import {getSqliteType } from "./Types";
+import { getSqliteType } from "./Types";
 
 /**
  * SQLite query handler class
@@ -150,7 +150,7 @@ export default class SqliteQuery extends BaseQuery {
                             });
                         }
 
-                        // Handle not operator
+                        // Handle top-level not operator
                         // @ts-ignore
                         if (this.data.where.not && typeof this.data.where.not === "object") {
                             // @ts-ignore
@@ -175,13 +175,42 @@ export default class SqliteQuery extends BaseQuery {
                             });
                         }
 
-                        // Handle where clause with operators
+                        // Handle regular where clause with nested operators
                         const lookUps = Object.entries(this.data!.where);
                         let whereClauses: string[] = [];
                         let values: any[] = [];
 
                         for (const [key, value] of lookUps) {
+                            // Skip top-level special operators that were already handled
+                            if (key === 'or' || key === 'not' || key === 'between' || key === 'in') {
+                                continue;
+                            }
+
                             if (typeof value === "object" && value !== null) {
+                                // Handle between operator
+                                if (value.between && Array.isArray(value.between) && value.between.length === 2) {
+                                    whereClauses.push(`"${key}" between ? and ?`);
+                                    values.push(value.between[0]);
+                                    values.push(value.between[1]);
+                                    continue;
+                                }
+
+                                // Handle in operator
+                                if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+                                    const placeholders = value.in.map(() => "?").join(", ");
+                                    whereClauses.push(`"${key}" in (${placeholders})`);
+                                    values.push(...value.in);
+                                    continue;
+                                }
+
+                                // Handle nested not operator
+                                if (value.not !== undefined) {
+                                    whereClauses.push(`"${key}" != ?`);
+                                    values.push(value.not);
+                                    continue;
+                                }
+
+                                // Handle regular operators
                                 for (const [operator, opValue] of Object.entries(value)) {
                                     switch (operator) {
                                         case "gte":
@@ -215,10 +244,23 @@ export default class SqliteQuery extends BaseQuery {
                             }
                         }
 
+                        if (whereClauses.length > 0) {
+                            return await new Promise<any>((resolve, reject) => {
+                                this.connection.all(
+                                    `select * from ${this.tableName} where ${whereClauses.join(' and ')}`,
+                                    values,
+                                    (err: any, rows: any) => {
+                                        if (err) reject(err);
+                                        else resolve(rows);
+                                    }
+                                );
+                            });
+                        }
+
+                        // If no where clauses, return all
                         return await new Promise<any>((resolve, reject) => {
                             this.connection.all(
-                                `select * from ${this.tableName} where ${whereClauses.join(' and ')}`,
-                                values,
+                                `select * from ${this.tableName}`,
                                 (err: any, rows: any) => {
                                     if (err) reject(err);
                                     else resolve(rows);

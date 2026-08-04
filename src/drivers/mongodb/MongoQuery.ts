@@ -107,7 +107,7 @@ export default class MongoQuery extends BaseQuery {
                             return await this.connection?.collection(this.collectionName).find(filter).toArray();
                         }
 
-                        // Handle not operator
+                        // Handle top-level not operator
                         // @ts-ignore
                         if (this.data.where.not && typeof this.data.where.not === "object") {
                             // @ts-ignore
@@ -126,7 +126,31 @@ export default class MongoQuery extends BaseQuery {
                         let filter: Record<string, any> = {};
 
                         for (const [key, value] of lookUps) {
+                            // Skip top-level special operators
+                            if (key === 'or' || key === 'not' || key === 'between' || key === 'in') {
+                                continue;
+                            }
+
                             if (typeof value === "object" && value !== null) {
+                                // Handle between operator
+                                if (value.between && Array.isArray(value.between) && value.between.length === 2) {
+                                    filter[key] = { $gte: value.between[0], $lte: value.between[1] };
+                                    continue;
+                                }
+
+                                // Handle in operator
+                                if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+                                    filter[key] = { $in: value.in };
+                                    continue;
+                                }
+
+                                // Handle nested not operator
+                                if (value.not !== undefined) {
+                                    filter[key] = { $ne: value.not };
+                                    continue;
+                                }
+
+                                // Handle regular operators
                                 for (const [operator, opValue] of Object.entries(value)) {
                                     switch (operator) {
                                         case "gte":
