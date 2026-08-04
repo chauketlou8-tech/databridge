@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extensible driver architecture
 - Connection pooling
 - Migration system
-- CLI tools
+- CLI tools with commands: version, help, driver:list
 - Unit and integration tests
 - Error codes system (D001-D081)
 - BaseQuery utility for shared query logic
@@ -56,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MariaDB guide and documentation
 - CouchDB guide and documentation
 - Auto-sliding database carousel on homepage
+- Particle animation background on hero section
+- Query operators: or, not, between, in
+- Data validation against schema for CouchDB
+- MariaDB and MySQL drivers with full query support
 
 ### Fixed
 - Type mismatch between Driver interface and abstract Driver class
@@ -75,6 +79,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database.ts to properly pass driver to ModelFactory
 - All driver query methods to accept Query type instead of string
 - Carousel infinite scroll glitch with CSS animation approach
+- MariaDB and MySQL query result destructuring to properly return arrays
+- PostgreSQL `in` operator placeholder generation bug
+- MariaDB `between` operator SQL generation
+- CouchDB duplicate document insertion check
+- CLI commands to reflect actual functionality
+- MariaDB and MySQL table exists check
+- SQLite query return type to Promise<any>
 
 ---
 
