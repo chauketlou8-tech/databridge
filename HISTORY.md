@@ -169,6 +169,12 @@ This file provides a chronological history of the DataBridge project, documentin
 
 ### 2026-08-02
 
+#### Query Operators Added
+- Implemented `or` operator - Query with multiple conditions
+- Implemented `not` operator - Exclude matching records
+- Implemented `between` operator - Range queries
+- Implemented `in` operator - Match values in an array
+
 #### Source Code Added
 - src/drivers/couchdb/ - CouchDB driver implementation
     - CouchDriver.ts - CouchDB database driver
@@ -180,9 +186,33 @@ This file provides a chronological history of the DataBridge project, documentin
 - tests/CouchQuery.test.ts - Jest tests for CouchDB query handler
 - tests/manual/CouchQuery.test.ts - Manual tests for CouchDB query handler
 
+#### Bugs Fixed
+- Fixed MariaDB `between` operator SQL generation
+- Fixed PostgreSQL `in` operator placeholder generation
+- Fixed MariaDB and MySQL query result destructuring to properly return arrays
+- Fixed CouchDB duplicate document insertion check
+- Fixed MariaDB and MySQL table exists check
+- Fixed SQLite query return type to Promise<any>
+
 #### Documentation Updated
 - README.md - Added CouchDB to supported databases
 - Docks/index.html - Added CouchDB to homepage
 - Docks/guides/couchdb.html - CouchDB guide page
 - Updated guide navigation flow: PostgreSQL → MySQL → MariaDB → MongoDB → SQLite → CouchDB
 - Added CouchDB connection examples in documentation
+- Updated CLI with driver:list command
+- Added particle animation background on hero section
+- Added auto-sliding database carousel on homepage
+
+### 2026-08-04
+
+#### CLI Improvements
+- Added `drivers` command to show available database drivers
+- Removed placeholder commands
+- CLI now shows real information about supported databases
+
+#### Documentation Website Updates
+- Created DataBridge Studio documentation website
+- User-focused documentation for the GUI tool
+- Download, Features, and Documentation pages
+- Clean dark theme matching DataBridge style
