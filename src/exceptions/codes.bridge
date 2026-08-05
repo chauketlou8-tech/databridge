@@ -54,7 +54,8 @@ D042 - Schema migration failed - The schema migration process failed
 D043 - Schema already exists - The schema already exists in the database
 D044 - Schema not found - The schema could not be found in the database
 D045 - Schema Missing - The Schema is not there or is a wrong Schema
-D046 - Schema error - General schema error
+D046 - Invalid type in Schema - An invalid data type has been entered into the schema
+D047 - Schema error - General schema error
 
 // ===== Model Errors (05x) =====
 // Errors related to model operations

@@ -1,3 +1,5 @@
+import { SchemaError } from "../exceptions";
+
 /**
  * DataBridge supported data types
  * These map directly to the types defined in types.bridge
@@ -63,7 +65,7 @@ export function normalizeType(type: any): DataType {
         if (VALID_TYPES.includes(upper as any)) {
             return upper as DataType;
         }
-        throw new Error(`Invalid type: "${type}"`);
+        throw new SchemaError(`Invalid type: "${type}"`, "D046");
     }
 
     // Handle enum values (both uppercase and lowercase keys)
@@ -85,5 +87,5 @@ export function normalizeType(type: any): DataType {
         return type as DataType;
     }
 
-    throw new Error(`Invalid type: "${String(type)}"`);
+    throw new SchemaError(`Invalid type: "${String(type)}"`, "D046");
 }

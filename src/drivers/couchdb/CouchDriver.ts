@@ -1,6 +1,7 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
 import type { Query } from "../../types/query";
+import type { Model } from "../../model/Model";
 import { DriverError, ConnectionError, SchemaError } from "../../exceptions";
 import CouchQuery from "./CouchQuery";
 import nano from "nano";
@@ -80,11 +81,11 @@ export class CouchDriver extends Driver {
         this.db = null;
     }
 
-    public async query(query: Query): Promise<any> {
+    public async query(model: Model | null, query: Query): Promise<any> {
         if (!this.connection || !this.db) {
             throw new ConnectionError("Not connected to database", "D015");
         }
 
-        return await new CouchQuery(query, this.db).run();
+        return await new CouchQuery(query, this.db, model).run();
     }
 }

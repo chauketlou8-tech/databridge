@@ -1,8 +1,9 @@
 import type { Config } from "../types/config";
-import { Query } from "../types/query";
+import type { Query } from "../types/query";
+import type { Model } from "../model";
 
 export interface Driver {
     connect(config: Config): Promise<void>;
     disconnect(): Promise<void>;
-    query(query: Query): Promise<any>;
+    query(model: Model | null, query: Query): Promise<any>;
 }

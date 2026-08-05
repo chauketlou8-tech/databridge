@@ -6,3 +6,4 @@ node_modules/
 *.db
 *.sql
 databridge-studio
+test-output.bridge

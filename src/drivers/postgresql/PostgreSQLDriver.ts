@@ -1,6 +1,7 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
 import type { Query } from "../../types/query";
+import type { Model } from "../../model";
 import { DriverError, ConnectionError } from "../../exceptions";
 import { Pool } from 'pg';
 import PostgresQuery from "./PostgresQuery";
@@ -33,7 +34,7 @@ export class PostgreSQLDriver extends Driver {
             if (match && match[1] && error && typeof error === "object" && "code" in error && error.code === "3D000") {
                 const dbName = match[1];
 
-                const adminUrl = this.config.url.replace(/\/([^/?]+)(\?.*)?$/,"/postgres$2");
+                const adminUrl = this.config.url.replace(/\/([^/?]+)(\?.*)?$/, "/postgres$2");
 
                 const adminPool = new Pool({
                     connectionString: adminUrl,
@@ -65,11 +66,11 @@ export class PostgreSQLDriver extends Driver {
         console.log("disconnected...");
     }
 
-    public async query(query: Query): Promise<any> {
+    public async query(model: Model | null, query: Query): Promise<any> {
         if (!this.pool) {
             throw new ConnectionError("Not connected to database", "D015");
         }
 
-        return await new PostgresQuery(query, this.pool).run();
+        return await new PostgresQuery(query, this.pool, model).run();
     }
 }

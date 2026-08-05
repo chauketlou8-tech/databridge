@@ -1,6 +1,7 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
 import type { Query } from "../../types/query";
+import type { Model } from "../../model";
 import mysql, { Connection } from "mysql2/promise";
 import { DriverError, ConnectionError } from "../../exceptions";
 import MysqlQuery from "./MysqlQuery";
@@ -71,11 +72,11 @@ export class MysqlDriver extends Driver {
         }
     }
 
-    public async query(query: Query): Promise<any> {
+    public async query(model: Model | null, query: Query): Promise<any> {
         if (!this.connection) {
             throw new ConnectionError("Not connected to database", "D015");
         }
 
-        return await new MysqlQuery(query, this.connection).run();
+        return await new MysqlQuery(query, this.connection, model).run();
     }
 }

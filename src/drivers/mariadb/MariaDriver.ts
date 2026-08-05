@@ -1,6 +1,7 @@
 import Driver from "../Driver";
 import type { Config } from "../../types/config";
 import type { Query } from "../../types/query";
+import type { Model } from "../../model";
 import mariaDB, { Connection } from "mariadb";
 import { DriverError, ConnectionError } from "../../exceptions";
 import MariaQuery from "./MariaQuery";
@@ -71,11 +72,11 @@ export class MariaDriver extends Driver {
         }
     }
 
-    public async query(query: Query): Promise<any> {
+    public async query(model: Model | null, query: Query): Promise<any> {
         if (!this.connection) {
             throw new ConnectionError("Not connected to database", "D015");
         }
 
-        return await new MariaQuery(query, this.connection).run();
+        return await new MariaQuery(query, this.connection, model).run();
     }
 }

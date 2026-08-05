@@ -20,6 +20,14 @@ export class Model implements MDL {
         this.driver = driver;
     }
 
+    public getName(): string {
+        return this.name;
+    }
+
+    public getSchema(): Schema {
+        return this.Schema;
+    }
+
     /**
      * Creates a new document/record in the database
      * @param data - The data to insert, must match the schema
@@ -30,7 +38,7 @@ export class Model implements MDL {
     public async create(data: Record<string, unknown>): Promise<Document> {
         // Check all schema fields exist in the data
         if (!this.Schema.fields.every(field => data.hasOwnProperty(field.field))) {
-            throw new ModelError("The model definition is invalid or malformed","D052");
+            throw new ModelError("The model definition is invalid or malformed", "D052");
         }
 
         // Check there are no extra fields not defined in schema
@@ -51,31 +59,41 @@ export class Model implements MDL {
                         throw new MisMatchError(`Field "${field.field}" must be a string`);
                     }
                     break;
+
                 case "NUMBER":
                     if (typeof value !== "number") {
                         throw new MisMatchError(`Field "${field.field}" must be a number`);
                     }
                     break;
+
                 case "BOOLEAN":
                     if (typeof value !== "boolean") {
                         throw new MisMatchError(`Field "${field.field}" must be a boolean`);
                     }
                     break;
+
                 case "DATE":
                     if (!(value instanceof Date)) {
                         throw new MisMatchError(`Field "${field.field}" must be a Date`);
                     }
                     break;
+
                 case "OBJECT":
-                    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+                    if (
+                        typeof value !== "object" ||
+                        value === null ||
+                        Array.isArray(value)
+                    ) {
                         throw new MisMatchError(`Field "${field.field}" must be an object`);
                     }
                     break;
+
                 case "ARRAY":
                     if (!Array.isArray(value)) {
                         throw new MisMatchError(`Field "${field.field}" must be an array`);
                     }
                     break;
+
                 default:
                     break;
             }
@@ -89,9 +107,9 @@ export class Model implements MDL {
                 name: this.name,
                 data
             }
-        }
+        };
 
-        await this.driver.query(createQuery);
+        await this.driver.query(this, createQuery);
 
         return new Document(data);
     }
@@ -119,12 +137,12 @@ export class Model implements MDL {
                 name: this.name,
                 where
             }
-        }
+        };
 
-        return await this.driver.query(findQuery);
+        return await this.driver.query(this, findQuery);
     }
 
-    public async findOne(where?: Record<string, unknown>): Promise<Document> {
+    public async findOne(where?: Record<string, unknown>): Promise<Document | null> {
         const findOneQuery: Query = {
             operation: "findOne",
             type: "document",
@@ -132,9 +150,9 @@ export class Model implements MDL {
                 name: this.name,
                 where
             }
-        }
+        };
 
-        return await this.driver.query(findOneQuery);
+        return await this.driver.query(this, findOneQuery);
     }
 
     /**
@@ -144,9 +162,13 @@ export class Model implements MDL {
      * @param name - The name of the model/table
      * @throws {SchemaError} If schema or name is invalid
      */
-    public static async make(Schema: Schema, driver: Driver, name: string): Promise<void> {
+    public static async make(
+        Schema: Schema,
+        driver: Driver,
+        name: string
+    ): Promise<void> {
         if (!Schema) {
-            throw new SchemaError(`Schema is missing or is of wrong type","D045");`)
+            throw new SchemaError("Schema is missing or is of wrong type", "D045");
         }
 
         if (!name) {
@@ -157,10 +179,11 @@ export class Model implements MDL {
             operation: "create",
             type: "model",
             data: {
-                name: name,
-                Schema: Schema,
+                name,
+                Schema
             }
-        }
-        await driver.query(modelQuery);
+        };
+
+        await driver.query(null, modelQuery);
     }
 }
