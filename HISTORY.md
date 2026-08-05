@@ -216,3 +216,51 @@ This file provides a chronological history of the DataBridge project, documentin
 - User-focused documentation for the GUI tool
 - Download, Features, and Documentation pages
 - Clean dark theme matching DataBridge style
+
+### 2026-08-05
+
+#### Query Operators Added
+- Implemented `gt`, `gte`, `lt`, `lte`, `ne` operators - Comparison queries
+- Implemented `nin` operator - Not in array queries
+- Implemented `regex` operator - Regular expression matching
+- Implemented `startsWith`, `endsWith`, `contains` operators - String matching
+- Implemented `nthContain` operator - Position-based string matching
+- Implemented `mod` operator - Modulo arithmetic queries
+- Implemented `elemMatch` operator - Array element matching
+- Implemented `size` operator - Array size queries
+- Implemented `any` and `all` operators - Subquery and array matching
+- Implemented `text` operator - Full-text search (PostgreSQL tsquery)
+- Implemented `ilike` operator - Case-insensitive LIKE
+- Implemented `soundex` operator - Phonetic matching
+- Implemented `levenshtein` operator - Fuzzy string matching
+- Implemented `dateDiff` operator - Date difference queries
+- Implemented `isDistinctFrom` operator - Not equal with NULL handling
+- Implemented `isNull` operator - NULL checks
+- Implemented `exists` operator - Field existence checks
+- Implemented `expr` operator - Expression-based queries
+
+#### BaseQuery Improvements
+- Added `getWhere()` to BaseQuery - Removed duplicate implementations from all 6 drivers
+- Added `getFieldTypes()` to BaseQuery - Shared type resolution for SQL drivers
+- Added `sterilizeResult()` to BaseQuery - Converts raw DB types to JavaScript types
+- Added `processRowData()` to BaseQuery - Shared row processing for inserts
+
+#### Driver Updates
+- SQLiteDriver updated to accept Model parameter for consistency
+- All SQL drivers (MySQL, MariaDB, PostgreSQL, SQLite) now use shared sterilization
+- Boolean values now correctly returned as true/false instead of 1/0
+- Date values now properly converted to ISO format strings
+- JSON and ARRAY fields now parsed from strings back to objects/arrays
+- BUFFER fields now reconstructed with proper type and data arrays
+- NUMBER fields now properly formatted with decimal places preserved
+
+#### Bugs Fixed
+- Fixed duplicate `getWhere()` methods across all 6 drivers
+- Fixed duplicate `getFieldTypes()` methods in MySQL, MariaDB, and SQLite drivers
+- Fixed duplicate `sterilizeResult()` methods in SQL-based drivers
+- Fixed boolean return values in SQL-based drivers (now true/false)
+- Fixed date serialization in SQL-based drivers (now ISO format)
+- Fixed JSON/ARRAY deserialization in SQL-based drivers
+- Fixed BUFFER field reconstruction in SQL-based drivers
+- Fixed PostgreSQL `text` operator to properly format tsquery for multi-word searches
+- Fixed PostgreSQL `dateDiff` operator ignoring date1 parameter

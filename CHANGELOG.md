@@ -60,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Query operators: or, not, between, in
 - Data validation against schema for CouchDB
 - MariaDB and MySQL drivers with full query support
+- Shared utility methods in BaseQuery: getWhere(), getFieldTypes(), sterilizeResult(), processRowData()
+- Result sterilization for SQL-based drivers to return proper JavaScript types
+- Query operators: gt, gte, lt, lte, ne, nin, regex, startsWith, endsWith, contains, nthContain, mod, elemMatch, size, any, all, text, ilike, soundex, levenshtein, dateDiff, isDistinctFrom, isNull, exists, expr
 
 ### Fixed
 - Type mismatch between Driver interface and abstract Driver class
@@ -86,6 +89,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI commands to reflect actual functionality
 - MariaDB and MySQL table exists check
 - SQLite query return type to Promise<any>
+- Duplicate getWhere() methods removed from all drivers, now inherited from BaseQuery
+- Duplicate getFieldTypes() methods removed from SQL drivers, now inherited from BaseQuery
+- Duplicate sterilizeResult() methods removed from SQL drivers, now inherited from BaseQuery
+- Duplicate processRowData() logic moved to BaseQuery for SQL drivers
+- Boolean values now properly returned as true/false instead of 1/0 in SQL-based drivers
+- Date values now properly converted to ISO format in SQL-based drivers
+- JSON/ARRAY fields now properly parsed in SQL-based drivers
+- BUFFER fields now properly reconstructed in SQL-based drivers
+- PostgreSQL text operator to properly format tsquery for multi-word searches
 
 ---
 
