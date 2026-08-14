@@ -231,13 +231,21 @@ export default class PostgresQuery extends BaseQuery {
         }
     }
 
+    /**
+     * Handles UPDATE operations for PostgreSQL
+     * Updates records matching the where clause with the set values
+     * @param none - Uses query data from class instance
+     * @returns {Promise<any[] | null>} - Array of updated records if RETURNING specified, otherwise null
+     * @throws {QueryError} - If where clause lacks 'set' field or set is invalid
+     * @throws {SchemaError} - If table doesn't exist
+     */
     private async handleUpdate(): Promise<any[] | null> {
         try {
             await this.ensureTableExists();
 
             const where = this.getWhere();
             const options: unknown = this.query.data?.options || null
-            //console.log(this.query.data)
+
             const values: unknown[] = [];
             let sql: string = "";
 
@@ -256,6 +264,7 @@ export default class PostgresQuery extends BaseQuery {
 
             const setFields = Object.entries(where.set);
 
+            // Build SET and WHERE clauses with parameterized placeholders
             const setClause = setFields.map(([key], i) => `${key} = $${i + 1}`).join(", ");
             const whereClause = findClause.map(([key], i) => `${key} = $${setFields.length + i + 1}`).join(" and ");
 
@@ -269,6 +278,7 @@ export default class PostgresQuery extends BaseQuery {
 
             sql += `update "${this.tableName}" set ${setClause} where ${whereClause}`
 
+            // Handle RETURNING clause if specified in options
             if (this.isReturnOption(options)) {
                 const option = options as string;
                 const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
