@@ -9,7 +9,7 @@ async function run() {
         url: "postgresql://postgres:password@localhost:port/testdb"
     });
 
-    console.log("Test 1: Create table from schema");
+    // console.log("Test 1: Create table from schema");
     const User = await db.model("users", new Schema({
         name: String,
         email: String,

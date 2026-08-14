@@ -11,7 +11,7 @@ import type { Model } from "../../model";
 export default class PostgresQuery extends BaseQuery {
     protected connection: any;
     protected tableName: string;
-    private model: Model | null;
+    private readonly model: Model | null;
 
     constructor(query: Query, pool: unknown, model: Model | null = null) {
         super(query);
@@ -34,17 +34,26 @@ export default class PostgresQuery extends BaseQuery {
             switch (this.operation) {
                 case "create":
                     return await this.handleCreate();
+
                 case "find":
                     return await this.handleFind();
+
                 case "findOne":
                     return await this.handleFindOne();
+
+                case "update":
+                    return await this.handleUpdate();
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
-        } catch (error) {
+        }
+
+        catch (error) {
             if (error instanceof QueryError || error instanceof SchemaError || error instanceof ModelError) {
                 throw error;
             }
+
             throw new QueryError(`PostgreSQL query failed: ${error instanceof Error ? error.message : String(error)}`, "D031");
         }
     }
@@ -53,8 +62,10 @@ export default class PostgresQuery extends BaseQuery {
         switch (this.query.type) {
             case "model":
                 return await this.handleCreateModel();
+
             case "object":
                 return await this.handleCreateObject();
+
             default:
                 throw new QueryError(`Create type "${this.query.type}" not implemented`, "D036");
         }
@@ -63,19 +74,15 @@ export default class PostgresQuery extends BaseQuery {
     private async handleCreateModel(): Promise<void> {
         this.readSchema();
 
-        const tables = await this.connection.query(
-            `select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`,
-            [this.tableName]
-        );
+        const tables = await this.connection.query(`select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`,[this.tableName]);
+
         if (tables.rows && tables.rows.length > 0) {
             throw new SchemaError(`Table "${this.tableName}" already exists`, "D043");
         }
 
-        const columns = Object.entries(this.fields)
-            .map(([field, type]) => `"${field}" ${type}`)
-            .join(",");
-
+        const columns = Object.entries(this.fields).map(([field, type]) => `"${field}" ${type}`).join(",");
         const createTableSQL = `create table if not exists "${this.tableName}" (id serial primary key, ${columns})`;
+
         await this.connection.query(createTableSQL);
     }
 
@@ -84,20 +91,30 @@ export default class PostgresQuery extends BaseQuery {
 
         const schema = this.model?.getSchema();
         const fieldTypes: Record<string, string> = {};
+
         if (schema) {
             for (const field of schema.fields) {
                 let rawType = field.type;
                 if (typeof rawType === 'function') {
                     if (rawType === String) rawType = 'STRING';
+
                     else if (rawType === Number) rawType = 'NUMBER';
+
                     else if (rawType === Boolean) rawType = 'BOOLEAN';
+
                     else if (rawType === Date) rawType = 'DATE';
+
                     else if (rawType === Object) rawType = 'OBJECT';
+
                     else if (rawType === Array) rawType = 'ARRAY';
+
                     else if (rawType === Buffer) rawType = 'BUFFER';
-                } else {
+                }
+
+                else {
                     rawType = rawType.toUpperCase();
                 }
+
                 fieldTypes[field.field] = rawType as string;
             }
         }
@@ -151,6 +168,7 @@ export default class PostgresQuery extends BaseQuery {
             await this.ensureTableExists();
 
             const where = this.getWhere();
+
             if (!where || Object.keys(where).length === 0) {
                 const result = await this.executeQuery(`select * from "${this.tableName}"`);
                 return this.sterilizeResult(result, this.model);
@@ -166,10 +184,13 @@ export default class PostgresQuery extends BaseQuery {
             const result = await this.executeQuery(fullSql, values);
             return this.sterilizeResult(result || [], this.model);
 
-        } catch (error) {
+        }
+
+        catch (error) {
             if (error instanceof SchemaError || error instanceof QueryError) {
                 throw error;
             }
+
             throw new QueryError(`Failed to query table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
         }
     }
@@ -199,19 +220,91 @@ export default class PostgresQuery extends BaseQuery {
             const result = await this.executeQuery(sql, values);
             return this.sterilizeResult(result[0] ?? null, this.model);
 
-        } catch (error) {
+        }
+
+        catch (error) {
             if (error instanceof SchemaError || error instanceof QueryError) {
                 throw error;
             }
+
             throw new QueryError(`Failed to find one in table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
         }
     }
 
+    private async handleUpdate(): Promise<any[] | null> {
+        try {
+            await this.ensureTableExists();
+
+            const where = this.getWhere();
+            const options: unknown = this.query.data?.options || null
+            //console.log(this.query.data)
+            const values: unknown[] = [];
+            let sql: string = "";
+
+            if (!(where.hasOwnProperty("set"))) {
+                throw new QueryError("\"update clause has no set field\"", "D030");
+            }
+
+            const whereParts = Object.entries(where);
+            const findClause = whereParts.filter((part) => {
+                return part[0] !== "set"
+            });
+
+            if (!(where.set instanceof Object) || Object.keys(where.set).length === 0) {
+                throw new QueryError("Invalid set type", "D030");
+            }
+
+            const setFields = Object.entries(where.set);
+
+            const setClause = setFields.map(([key], i) => `${key} = $${i + 1}`).join(", ");
+            const whereClause = findClause.map(([key], i) => `${key} = $${setFields.length + i + 1}`).join(" and ");
+
+            for (const field of setFields) {
+                values.push(field[1]);
+            }
+
+            for (const clause of findClause) {
+                values.push(clause[1])
+            }
+
+            sql += `update "${this.tableName}" set ${setClause} where ${whereClause}`
+
+            if (this.isReturnOption(options)) {
+                const option = options as string;
+                const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
+
+                if (parts[1].trim().toLowerCase() === "all") {
+                    sql += ` returning *`
+                }
+
+                else {
+                    const fields = parts.slice(1);
+                    const returnFields = fields.map((field) => `${field}`).join(", ");
+                    sql += ` returning ${returnFields}`
+                }
+            }
+
+            const results = await this.executeQuery(sql, values);
+
+            return options ? results : null;
+        }
+
+        catch (error) {
+            if (error instanceof SchemaError || error instanceof QueryError) {
+                throw error;
+            }
+
+            throw new QueryError(`Failed to find one in table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    private isReturnOption(option: any): boolean {
+        return typeof option === "string" && option.split(" ")[0].trim() === "return";
+    }
+
     private async ensureTableExists(): Promise<void> {
-        const tableCheck = await this.connection.query(
-            `select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`,
-            [this.tableName]
-        );
+        const tableCheck = await this.connection.query(`select table_name from information_schema.tables where table_schema = 'public' and table_name = $1`,[this.tableName]);
+
         if (!tableCheck.rows || tableCheck.rows.length === 0) {
             throw new SchemaError(`Table "${this.tableName}" does not exist`, "D044");
         }
@@ -229,8 +322,10 @@ export default class PostgresQuery extends BaseQuery {
         if (where.expr && typeof where.expr === "object") {
             const idx = { value: 1 };
             const exprSQL = this.buildExprSQL(where.expr, idx);
+
             const sql = `select * from "${this.tableName}" where ${exprSQL.sql}${isFindOne ? ' limit 1' : ''}`;
             const result = await this.executeQuery(sql, exprSQL.values);
+
             return isFindOne ? (result[0] ?? null) : (result || []);
         }
 
@@ -249,12 +344,14 @@ export default class PostgresQuery extends BaseQuery {
 
             const sql = `select * from "${this.tableName}" where ${whereClauses.join(' or ')}${isFindOne ? ' limit 1' : ''}`;
             const result = await this.executeQuery(sql, values);
+
             return isFindOne ? (result[0] ?? null) : (result || []);
         }
 
         if (where.not && typeof where.not === "object") {
             const notConditions = where.not;
             const whereClauses: string[] = [];
+
             const values: any[] = [];
             const idx = { value: 1 };
 
@@ -266,6 +363,7 @@ export default class PostgresQuery extends BaseQuery {
 
             const sql = `select * from "${this.tableName}" where ${whereClauses.join(' and ')}${isFindOne ? ' limit 1' : ''}`;
             const result = await this.executeQuery(sql, values);
+
             return isFindOne ? (result[0] ?? null) : (result || []);
         }
 
@@ -273,11 +371,11 @@ export default class PostgresQuery extends BaseQuery {
             if (where.exists.relation && where.exists.where) {
                 const relation = where.exists.relation;
                 const whereClause = where.exists.where;
-                const subWhere = Object.entries(whereClause)
-                    .map(([key, value]) => `"${key}" = "${value}"`)
-                    .join(' AND ');
+                const subWhere = Object.entries(whereClause).map(([key, value]) => `"${key}" = "${value}"`).join(' and ');
+
                 const sql = `select * from "${this.tableName}" where exists (select 1 from "${relation}" where ${subWhere})${isFindOne ? ' limit 1' : ''}`;
                 const result = await this.connection.query(sql);
+
                 return isFindOne ? (result.rows && result.rows.length > 0 ? result.rows[0] : null) : (result.rows || []);
             }
         }
@@ -302,12 +400,19 @@ export default class PostgresQuery extends BaseQuery {
 
             if (typeof value === "object" && value !== null) {
                 this.handleObjectOperator(key, value, whereClauses, values, idx);
-            } else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
-                if (value === '') throw new QueryError(`Regex pattern cannot be empty for field "${key}"`, "D036");
+            }
+
+            else if (typeof value === "string" && /[.*+?^${}()|[\]\\]/.test(value)) {
+                if (value === '') {
+                    throw new QueryError(`Regex pattern cannot be empty for field "${key}"`, "D036");
+                }
+
                 whereClauses.push(`"${key}" ~ $${idx.value}`);
                 values.push(value);
                 idx.value++;
-            } else {
+            }
+
+            else {
                 whereClauses.push(`"${key}" = $${idx.value}`);
                 values.push(value);
                 idx.value++;
@@ -320,21 +425,17 @@ export default class PostgresQuery extends BaseQuery {
         };
     }
 
-    private handleObjectOperator(
-        key: string,
-        value: any,
-        whereClauses: string[],
-        values: any[],
-        idx: { value: number }
-    ): void {
+    private handleObjectOperator(key: string, value: any, whereClauses: string[], values: any[], idx: { value: number }): void {
         if (value.any !== undefined) {
             if (typeof value.any !== 'string' || value.any === '') {
                 throw new QueryError(`"any" operator requires a non-empty string subquery for field "${key}"`, "D036");
             }
-            if (!/^\s*SELECT/i.test(value.any)) {
-                throw new QueryError(`"any" operator subquery must be a SELECT statement for field "${key}"`, "D036");
+
+            if (!/^\s*select/i.test(value.any)) {
+                throw new QueryError(`"any" operator subquery must be a select statement for field "${key}"`, "D036");
             }
-            whereClauses.push(`"${key}" = ANY (${value.any})`);
+
+            whereClauses.push(`"${key}" = any (${value.any})`);
             return;
         }
 
@@ -343,20 +444,25 @@ export default class PostgresQuery extends BaseQuery {
                 if (value.all === '') {
                     throw new QueryError(`"all" subquery operator requires a non-empty string for field "${key}"`, "D036");
                 }
-                if (!/^\s*SELECT/i.test(value.all)) {
+
+                if (!/^\s*select/i.test(value.all)) {
                     throw new QueryError(`"all" subquery operator must be a SELECT statement for field "${key}"`, "D036");
                 }
-                whereClauses.push(`"${key}" = ALL (${value.all})`);
+                whereClauses.push(`"${key}" = all (${value.all})`);
                 return;
             }
+
             if (!Array.isArray(value.all)) {
                 throw new QueryError(`"all" operator requires an array value for field "${key}"`, "D036");
             }
+
             if (value.all.length === 0) {
                 throw new QueryError(`"all" operator requires a non-empty array for field "${key}"`, "D036");
             }
-            const conditions = value.all.map(() => `"${key}" ILIKE $${idx.value}`).join(' AND ');
+
+            const conditions = value.all.map(() => `"${key}" ILIKE $${idx.value}`).join(' and ');
             whereClauses.push(`(${conditions})`);
+
             for (const item of value.all) {
                 values.push(`%${item}%`);
                 idx.value++;
@@ -367,6 +473,7 @@ export default class PostgresQuery extends BaseQuery {
         if (value.isDistinctFrom !== undefined) {
             whereClauses.push(`"${key}" != $${idx.value}`);
             values.push(value.isDistinctFrom);
+
             idx.value++;
             return;
         }
@@ -375,15 +482,13 @@ export default class PostgresQuery extends BaseQuery {
             if (typeof value.text !== 'string' || value.text === '') {
                 throw new QueryError(`"text" operator requires a non-empty string for field "${key}"`, "D036");
             }
-            const tsquery = value.text
-                .trim()
-                .split(/\s+/)
-                .map((word: string) => word.replace(/['\\]/g, ''))
-                .filter((word: string) => word.length > 0)
-                .join(' & ');
+
+            const tsquery = value.text.trim().split(/\s+/).map((word: string) => word.replace(/['\\]/g, '')).filter((word: string) => word.length > 0).join(' & ');
+
             if (!tsquery) {
                 throw new QueryError(`"text" operator produced invalid tsquery for field "${key}"`, "D036");
             }
+
             whereClauses.push(`to_tsvector("${key}") @@ to_tsquery($${idx.value})`);
             values.push(tsquery);
             idx.value++;
@@ -393,6 +498,7 @@ export default class PostgresQuery extends BaseQuery {
         if (value.ilike !== undefined) {
             whereClauses.push(`"${key}" ILIKE $${idx.value}`);
             values.push(value.ilike);
+
             idx.value++;
             return;
         }
@@ -401,8 +507,10 @@ export default class PostgresQuery extends BaseQuery {
             if (typeof value.soundex !== 'string' || value.soundex === '') {
                 throw new QueryError(`"soundex" operator requires a non-empty string for field "${key}"`, "D036");
             }
+
             const firstLetters = value.soundex.trim().substring(0, 3);
             whereClauses.push(`"${key}" ILIKE $${idx.value}`);
+
             values.push(`${firstLetters}%`);
             idx.value++;
             return;
@@ -412,16 +520,19 @@ export default class PostgresQuery extends BaseQuery {
             if (typeof value.levenshtein !== 'string' || value.levenshtein === '') {
                 throw new QueryError(`"levenshtein" operator requires a non-empty string for field "${key}"`, "D036");
             }
+
             const term = value.levenshtein.trim();
             const firstLetters = term.substring(0, 3);
+
             const conditions = [
-                `LOWER("${key}") = LOWER($${idx.value})`,
+                `lower("${key}") = lower($${idx.value})`,
                 `"${key}" ILIKE $${idx.value + 1}`,
                 `"${key}" ILIKE $${idx.value + 2}`,
                 `"${key}" ILIKE $${idx.value + 3}`,
                 `"${key}" ILIKE $${idx.value + 4}`
             ];
-            whereClauses.push(`(${conditions.join(' OR ')})`);
+
+            whereClauses.push(`(${conditions.join(' or ')})`);
             values.push(term, `${term}%`, `%${term}%`, `${firstLetters}%`, `%${term}`);
             idx.value += 5;
             return;
@@ -431,23 +542,29 @@ export default class PostgresQuery extends BaseQuery {
             if (!Array.isArray(value.dateDiff) || value.dateDiff.length !== 2) {
                 throw new QueryError(`"dateDiff" requires [date1, date2] for field "${key}"`, "D036");
             }
+
             const [date1, date2] = value.dateDiff;
             const daysMatch = String(date2).match(/^(\d+)\s*days?$/i);
+
             if (!daysMatch) {
                 throw new QueryError(`"dateDiff" second value must be like "90 days" for field "${key}"`, "D036");
             }
+
             const days = parseInt(daysMatch[1]);
 
             let dateExpr: string;
+
             if (String(date1).toLowerCase() === 'now') {
-                dateExpr = 'NOW()';
-            } else {
+                dateExpr = 'now()';
+            }
+
+            else {
                 dateExpr = `$${idx.value}`;
                 values.push(date1);
                 idx.value++;
             }
 
-            whereClauses.push(`EXTRACT(DAY FROM (${dateExpr} - "${key}")) <= $${idx.value}`);
+            whereClauses.push(`extract(day from (${dateExpr} - "${key}")) <= $${idx.value}`);
             values.push(days);
             idx.value++;
             return;
@@ -457,7 +574,8 @@ export default class PostgresQuery extends BaseQuery {
             if (!Array.isArray(value.mod) || value.mod.length !== 2) {
                 throw new QueryError(`"mod" requires [divisor, remainder] for field "${key}"`, "D036");
             }
-            whereClauses.push(`MOD("${key}", $${idx.value}) = $${idx.value + 1}`);
+
+            whereClauses.push(`mod("${key}", $${idx.value}) = $${idx.value + 1}`);
             values.push(value.mod[0], value.mod[1]);
             idx.value += 2;
             return;
@@ -466,8 +584,10 @@ export default class PostgresQuery extends BaseQuery {
         if (value.elemMatch !== undefined) {
             const field = Object.keys(value.elemMatch)[0];
             const val = Object.values(value.elemMatch)[0];
-            whereClauses.push(`JSON_EXTRACT("${key}", '$[*]."${field}"') = $${idx.value}`);
+
+            whereClauses.push(`json_extract("${key}", '$[*]."${field}"') = $${idx.value}`);
             values.push(val);
+
             idx.value++;
             return;
         }
@@ -475,8 +595,10 @@ export default class PostgresQuery extends BaseQuery {
         if (value.size !== undefined) {
             const op = typeof value.size === 'object' ? Object.keys(value.size)[0] : '=';
             const val = typeof value.size === 'object' ? Object.values(value.size)[0] : value.size;
-            whereClauses.push(`JSON_ARRAY_LENGTH("${key}") ${op} $${idx.value}`);
+
+            whereClauses.push(`json_array_length("${key}") ${op} $${idx.value}`);
             values.push(val);
+
             idx.value++;
             return;
         }
@@ -485,26 +607,29 @@ export default class PostgresQuery extends BaseQuery {
             if (!Array.isArray(value.nin) || value.nin.length === 0) {
                 throw new QueryError(`"nin" requires a non-empty array for field "${key}"`, "D036");
             }
+
             const placeholders = value.nin.map((_: any, i: number) => `$${idx.value + i}`).join(", ");
-            whereClauses.push(`"${key}" NOT IN (${placeholders})`);
+            whereClauses.push(`"${key}" not in (${placeholders})`);
+
             values.push(...value.nin);
             idx.value += value.nin.length;
             return;
         }
 
         if (value.exists !== undefined) {
-            whereClauses.push(value.exists ? `"${key}" IS NOT NULL` : `"${key}" IS NULL`);
+            whereClauses.push(value.exists ? `"${key}" is not null` : `"${key}" is null`);
             return;
         }
 
         if (value.isNull !== undefined) {
-            whereClauses.push(value.isNull ? `"${key}" IS NULL` : `"${key}" IS NOT NULL`);
+            whereClauses.push(value.isNull ? `"${key}" is null` : `"${key}" is not null`);
             return;
         }
 
         if (value.regex !== undefined) {
             whereClauses.push(`"${key}" ~ $${idx.value}`);
             values.push(value.regex);
+
             idx.value++;
             return;
         }
@@ -512,6 +637,7 @@ export default class PostgresQuery extends BaseQuery {
         if (value.startsWith !== undefined) {
             whereClauses.push(`"${key}" ILIKE $${idx.value}`);
             values.push(`${value.startsWith}%`);
+
             idx.value++;
             return;
         }
@@ -519,6 +645,7 @@ export default class PostgresQuery extends BaseQuery {
         if (value.endsWith !== undefined) {
             whereClauses.push(`"${key}" ILIKE $${idx.value}`);
             values.push(`%${value.endsWith}`);
+
             idx.value++;
             return;
         }
@@ -526,6 +653,7 @@ export default class PostgresQuery extends BaseQuery {
         if (value.contains !== undefined) {
             whereClauses.push(`"${key}" ILIKE $${idx.value}`);
             values.push(`%${value.contains}%`);
+
             idx.value++;
             return;
         }
@@ -536,7 +664,11 @@ export default class PostgresQuery extends BaseQuery {
 
             for (const [position, positionValue] of Object.entries(value.nthContain)) {
                 const pos = posMap[position] || parseInt(position);
-                if (isNaN(pos) || pos < 1) throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+
+                if (isNaN(pos) || pos < 1) {
+                    throw new QueryError(`Invalid position "${position}" for nthContain`, "D036");
+                }
+
                 const prefix = "_".repeat(pos - 1);
 
                 if (Array.isArray(positionValue)) {
@@ -545,22 +677,30 @@ export default class PostgresQuery extends BaseQuery {
                         if (val === undefined || val === null) {
                             throw new QueryError(`"nthContain" value cannot be null or undefined at position "${position}" for field "${key}"`, "D036");
                         }
+
                         if (typeof val !== 'string') {
                             throw new QueryError(`"nthContain" values must be strings for field "${key}"`, "D036");
                         }
+
                         ors.push(`"${key}" ILIKE $${idx.value}`);
                         values.push(`${prefix}${val}%`);
                         idx.value++;
                     }
+
                     allOrs.push(`(${ors.join(' OR ')})`);
-                } else if (typeof positionValue === "string") {
+                }
+
+                else if (typeof positionValue === "string") {
                     if (positionValue === '') {
                         throw new QueryError(`"nthContain" requires a non-empty string at position "${position}" for field "${key}"`, "D036");
                     }
+
                     allOrs.push(`"${key}" ILIKE $${idx.value}`);
                     values.push(`${prefix}${positionValue}%`);
                     idx.value++;
-                } else {
+                }
+
+                else {
                     throw new QueryError(`Invalid value for nthContain at position "${position}"`, "D036");
                 }
             }
@@ -573,8 +713,10 @@ export default class PostgresQuery extends BaseQuery {
             if (!Array.isArray(value.between) || value.between.length !== 2) {
                 throw new QueryError(`"between" requires 2 values for field "${key}"`, "D036");
             }
-            whereClauses.push(`"${key}" BETWEEN $${idx.value} AND $${idx.value + 1}`);
+
+            whereClauses.push(`"${key}" between $${idx.value} and $${idx.value + 1}`);
             values.push(value.between[0], value.between[1]);
+
             idx.value += 2;
             return;
         }
@@ -584,7 +726,8 @@ export default class PostgresQuery extends BaseQuery {
                 throw new QueryError(`"in" requires a non-empty array for field "${key}"`, "D036");
             }
             const placeholders = value.in.map((_: any, i: number) => `$${idx.value + i}`).join(", ");
-            whereClauses.push(`"${key}" IN (${placeholders})`);
+            whereClauses.push(`"${key}" in (${placeholders})`);
+
             values.push(...value.in);
             idx.value += value.in.length;
             return;
@@ -593,6 +736,7 @@ export default class PostgresQuery extends BaseQuery {
         if (value.not !== undefined) {
             whereClauses.push(`"${key}" != $${idx.value}`);
             values.push(value.not);
+
             idx.value++;
             return;
         }
@@ -602,18 +746,18 @@ export default class PostgresQuery extends BaseQuery {
         for (const [op, opVal] of Object.entries(value)) {
             if (op in opMap) {
                 whereClauses.push(`"${key}" ${opMap[op]} $${idx.value}`);
-            } else {
+            }
+
+            else {
                 whereClauses.push(`"${key}" = $${idx.value}`);
             }
+
             values.push(opVal);
             idx.value++;
         }
     }
 
-    private buildExprSQL(
-        expr: any,
-        index: { value: number }
-    ): { sql: string; values: any[] } {
+    private buildExprSQL(expr: any, index: { value: number }): { sql: string; values: any[] } {
 
         if (expr === undefined || expr === null) {
             throw new QueryError("Expr cannot be null or undefined", "D036");

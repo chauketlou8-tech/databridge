@@ -156,6 +156,51 @@ export class Model implements MDL {
     }
 
     /**
+     * updates a record/records in the database
+     *
+     * @param where - filter conditions for the documents to update
+     * @param options - optional additional things for the update
+     * @returns null or an array of the updated documents
+     *
+     * @example
+     * //update the salary of an employee named John and get nothing back
+     * await Employees.update({
+     *     name: John,
+     *     set: {
+     *         salary: 15000
+     *     }
+     * });
+     *
+     * //update the salary and bonus of employees not named John and age above 50 and get their record
+     * await Employees.update({
+     *     name: {
+     *         not: John
+     *     },
+     *     age: {
+     *         gte: 50
+     *     },
+     *     set: {
+     *         salary: 15000,
+     *         bonus: 25000
+     *     }
+     * }, return all)
+     */
+
+    public async update(where: Record<string, unknown>, options?: unknown): Promise<Document[] | null> {
+        const updateQuery: Query = {
+            operation: "update",
+            type: "document",
+            data: {
+                name: this.name,
+                where,
+                options
+            }
+        }
+
+        return await this.driver.query(this, updateQuery);
+    }
+
+    /**
      * Creates the database table/collection for this model
      * @param Schema - The schema definition
      * @param driver - The database driver instance

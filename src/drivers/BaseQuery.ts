@@ -6,6 +6,7 @@ import type { Model } from "../model";
 /**
  * Base query handler class
  * Contains methods that are IDENTICAL across ALL database drivers
+ * Every driver query extends this class
  */
 export default abstract class BaseQuery {
     protected query: Query;
@@ -55,6 +56,7 @@ export default abstract class BaseQuery {
         if (!this.query.data?.hasOwnProperty("Schema") || !(this.query.data["Schema"] instanceof Schema)) {
             throw new SchemaError("The schema definition is invalid or malformed", "D040");
         }
+
         const schema = this.query.data["Schema"] as Schema;
         for (const field of schema.fields) {
             this.fields[field.field] = this.mapType(field.type);
@@ -67,6 +69,7 @@ export default abstract class BaseQuery {
      */
     protected validateModelName(): void {
         const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
         if (!VALID_IDENTIFIER.test(this.data!.name as string)) {
             throw new ModelError("Invalid model name", "D056");
         }
