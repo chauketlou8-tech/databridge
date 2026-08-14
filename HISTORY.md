@@ -264,3 +264,8 @@ This file provides a chronological history of the DataBridge project, documentin
 - Fixed BUFFER field reconstruction in SQL-based drivers
 - Fixed PostgreSQL `text` operator to properly format tsquery for multi-word searches
 - Fixed PostgreSQL `dateDiff` operator ignoring date1 parameter
+
+### 2026-08-15
+
+#### Model Improvements
+- Added `update()` method to Model class for updating documents
