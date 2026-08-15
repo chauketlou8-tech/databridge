@@ -234,7 +234,6 @@ export default class PostgresQuery extends BaseQuery {
     /**
      * Handles UPDATE operations for PostgreSQL
      * Updates records matching the where clause with the set values
-     * @param none - Uses query data from class instance
      * @returns {Promise<any[] | null>} - Array of updated records if RETURNING specified, otherwise null
      * @throws {QueryError} - If where clause lacks 'set' field or set is invalid
      * @throws {SchemaError} - If table doesn't exist
@@ -266,37 +265,131 @@ export default class PostgresQuery extends BaseQuery {
 
             // Build SET and WHERE clauses with parameterized placeholders
             const setClause = setFields.map(([key], i) => `${key} = $${i + 1}`).join(", ");
-            const whereClause = findClause.map(([key], i) => `${key} = $${setFields.length + i + 1}`).join(" and ");
+            let whereClause = "";
+
+            let index = setFields.length + 1;
+            const lastIndex = setFields.length + findClause.length // index to tell where to not add and
 
             for (const field of setFields) {
                 values.push(field[1]);
             }
 
             for (const clause of findClause) {
-                values.push(clause[1])
+                if (typeof clause[1] === "object") {
+                    const val = clause[1] as Object;
+                    const destruct = Object.entries(val).flat();
+
+                    const key = clause[0];
+                    const operator = destruct[0];
+                    const value = destruct[1];
+
+                    switch (operator) {
+                        case "gt":
+                            index === lastIndex ? whereClause += `${key} > $${index}` : whereClause += `${key} > $${index} and `
+                            values.push(value);
+
+                            index++;
+                            continue;
+
+                        case "lt":
+                            index === lastIndex ? whereClause += `${key} < $${index}` : whereClause += `${key} > $${index} and `
+                            values.push(value);
+
+                            index++;
+                            continue;
+
+                        case "gte":
+                            index === lastIndex ? whereClause += `${key} >= $${index}` : whereClause += `${key} >= $${index} and `
+                            values.push(value);
+
+                            index++;
+                            continue;
+
+                        case "lte":
+                            index === lastIndex ? whereClause += `${key} <= $${index}` : whereClause += `${key} <= $${index} and `
+                            values.push(value);
+
+                            index++;
+                            continue;
+
+                        case "ne":
+                            index === lastIndex ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
+                            values.push(value);
+
+                            index++;
+                            continue;
+
+                        case "not":
+                            index === lastIndex ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
+                            values.push(value);
+
+                            index++;
+                            continue;
+
+                        case "between":
+                            if (!Array.isArray(value)) {
+                                throw new QueryError("Value for between query must be an array", "D033");
+                            }
+
+                            if (value.length !== 2) {
+                                throw new QueryError("Value for between query must have 2 elements", "D033");
+                            }
+
+                            index === lastIndex - value.length + 1 ? whereClause += `${key} between $${index} and $${index + 1}` : whereClause += `${key} between $${index} and $${index + 1} and `
+                            values.push(value[0], value[1]);
+
+                            index += 2;
+                            continue;
+
+                        case "in":
+                            if (!Array.isArray(value)) {
+                                throw new QueryError("Value for in query must be an array", "D033");
+                            }
+
+                            if (value.length === 0) {
+                                throw new QueryError("Value for in query cannot be empty", "D033");
+                            }
+
+                            const placeholders = value.map((_, i) => `$${index + i}`).join(", ");
+                            whereClause += `${key} in (${placeholders})`;
+
+                            if (index === lastIndex - value.length + 1) {
+                                whereClause += " and ";
+                            }
+                            values.push(...value);
+                            index += value.length;
+                            continue;
+                    }
+                }
+
+                index === lastIndex ? whereClause += `${clause[0]} = $${index}` : whereClause += `${clause[0]} = $${index} and `
+                values.push(clause[1]);
+                index++;
             }
 
             sql += `update "${this.tableName}" set ${setClause} where ${whereClause}`
+            console.log(sql, values);
 
-            // Handle RETURNING clause if specified in options
-            if (this.isReturnOption(options)) {
-                const option = options as string;
-                const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
+            // // Handle RETURNING clause if specified in options
+            // if (this.isReturnOption(options)) {
+            //     const option = options as string;
+            //     const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
+            //
+            //     if (parts[1].trim().toLowerCase() === "all") {
+            //         sql += ` returning *`
+            //     }
+            //
+            //     else {
+            //         const fields = parts.slice(1);
+            //         const returnFields = fields.map((field) => `${field}`).join(", ");
+            //         sql += ` returning ${returnFields}`
+            //     }
+            // }
+            //
+            // const results = await this.executeQuery(sql, values);
 
-                if (parts[1].trim().toLowerCase() === "all") {
-                    sql += ` returning *`
-                }
-
-                else {
-                    const fields = parts.slice(1);
-                    const returnFields = fields.map((field) => `${field}`).join(", ");
-                    sql += ` returning ${returnFields}`
-                }
-            }
-
-            const results = await this.executeQuery(sql, values);
-
-            return options ? results : null;
+            //return options ? results : null;
+            return null;
         }
 
         catch (error) {

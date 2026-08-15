@@ -29,14 +29,20 @@ async function main() {
         email: "evah@gmail.com"
     });
 
-    console.log(await employees.update({
-        name: "John Doe",
-        age: 27,
+    console.log();
+
+    await employees.update({
+        name: {
+            in: ["John Doe", "Eva Marie"],
+        },
+        age: {
+            between: [20, 35]
+        },
         set: {
             age: 28,
             email: "john2@gmail.com"
         }
-    }));
+    })
 
     //await db.close();
 }
