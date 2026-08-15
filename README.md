@@ -121,14 +121,13 @@ const db = await DataBridge.connect({
     url: "postgres://localhost:5432/myapp"
 });
 
-const User = await db.model(
-    "User",
-    new Schema({
-        name: String,
-        email: String,
-        age: Number
-    })
-);
+const userSchema = new Schema({
+    name: String,
+    email: String,
+    age: Number
+})
+
+const User = await db.model("User", userSchema);
 
 await User.create({
     name: "John",
