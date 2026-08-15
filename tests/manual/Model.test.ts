@@ -7,7 +7,7 @@ async function run() {
         provider: "mariadb",
         host: "localhost",
         user: "root",
-        password: "TemaSecondary0909@",
+        password: "password",
         database: "testdb"
     });
 
