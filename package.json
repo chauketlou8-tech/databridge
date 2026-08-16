@@ -16,7 +16,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "test:manual": "tsx tests/manual/update.test.ts",
+    "test:manual": "tsx tests/manual/Model.test.ts",
     "deploy": "vercel --prod --cwd Docs",
     "build": "tsc"
   },

@@ -4,11 +4,8 @@ import * as path from "path";
 
 async function run() {
     const db = await DataBridge.connect({
-        provider: "mariadb",
-        host: "localhost",
-        user: "root",
-        password: "password",
-        database: "testdb"
+        provider: "postgres",
+        url: "postgresql://postgres:password@localhost:port/testdb"
     });
 
     // ==================== MODELS WITH ALL TYPE VARIATIONS ====================
@@ -269,10 +266,10 @@ async function run() {
     });
 
     const userAnySubquery = await User.findOne({
-        age: { any: "SELECT age FROM users WHERE age > 30" }
+        age: { any: "select age from users where age > 30" }
     });
     const userAllSubquery = await User.findOne({
-        age: { all: "SELECT age FROM users WHERE age < 30" }
+        age: { all: "select age from users where age < 30" }
     });
 
     const userWithOrders = await User.findOne({
@@ -319,6 +316,156 @@ async function run() {
     const deliveredOrders = await Order.find({ status: "delivered" });
     const pendingOrders = await Order.find({ status: "pending" });
     const ordersTotalGt100 = await Order.find({ total: { gt: 100 } });
+
+    // ==================== UPDATE QUERIES ====================
+// UPDATE TESTS - Only use fields that exist in the schema
+
+    const updateJohn = await User.update({
+        name: "John Doe",
+        set: { age: 29 }
+    });
+
+    const updateJohnReturnAll = await User.update({
+        name: "John Doe",
+        set: { age: 30 }
+    }, "return all");
+
+    const updateJohnReturnFields = await User.update({
+        name: "John Doe",
+        set: { age: 31 }
+    }, "return id, name, age");
+
+    const updateAgeGt40 = await User.update({
+        age: { gt: 40 },
+        set: { status: "senior" }
+    });
+
+    const updateAgeGte30 = await User.update({
+        age: { gte: 30 },
+        set: { isActive: false }
+    });
+
+    const updateAgeLt25 = await User.update({
+        age: { lt: 25 },
+        set: { salary: 50000 }
+    });
+
+    const updateBetween = await User.update({
+        age: { between: [25, 35] },
+        set: { salary: 90000 }
+    });
+
+    const updateOr = await User.update({
+        or: [{ name: "John Doe" }, { name: "Sarah Smith" }],
+        set: { status: "active" }
+    });
+
+    const updateNot = await User.update({
+        not: { name: "John Doe" },
+        set: { isActive: false }
+    });
+
+    const updateStartsWith = await User.update({
+        name: { startsWith: "J" },
+        set: { status: "J-team" }
+    });
+
+    const updateEndsWith = await User.update({
+        name: { endsWith: "e" },
+        set: { status: "E-team" }
+    });
+
+    const updateContains = await User.update({
+        name: { contains: "Smith" },
+        set: { status: "Smith-team" }
+    });
+
+    const updateNthContain = await User.update({
+        name: { nthContain: { second: "o" } },
+        set: { status: "contains-o" }
+    });
+
+    const updateIn = await User.update({
+        name: { in: ["John Doe", "Sarah Smith", "Mike Johnson"] },
+        set: { status: "selected" }
+    });
+
+    const updateNin = await User.update({
+        name: { nin: ["John Doe", "David Kim"] },
+        set: { status: "not-selected" }
+    });
+
+    const updateExists = await User.update({
+        email: { exists: true },
+        set: { verified: true }
+    });
+
+    const updateIsNull = await User.update({
+        email: { isNull: true },
+        set: { verified: false }
+    });
+
+    const updateSoundex = await User.update({
+        name: { soundex: "John" },
+        set: { status: "soundex-match" }
+    });
+
+    const updateLevenshtein = await User.update({
+        name: { levenshtein: "Jon" },
+        set: { status: "fuzzy-match" }
+    });
+
+    const updateDateDiff = await User.update({
+        createdAt: { dateDiff: ["now", "90 days"] },
+        set: { status: "recent" }
+    });
+
+    const updateIsDistinctFrom = await User.update({
+        name: { isDistinctFrom: "John Doe" },
+        set: { status: "not-john" }
+    });
+
+    const updateMod = await User.update({
+        id: { mod: [2, 1] },
+        set: { status: "odd-id" }
+    });
+
+    const updateProductText = await Product.update({
+        description: { text: "wireless headphones" },
+        set: { category: "audio" }
+    });
+
+    const updateMultipleFields = await User.update({
+        name: "John Doe",
+        set: {
+            age: 35,
+            salary: 95000,
+            status: "updated",
+            isActive: true
+        }
+    });
+
+    const updateMultipleConditions = await User.update({
+        age: { gt: 25 },
+        status: "active",
+        set: { score: 100 }
+    }, "return all");
+
+    const updateComplex = await User.update({
+        name: { startsWith: "M", endsWith: "n" },
+        age: { between: [30, 50] },
+        set: { status: "complex-match" }
+    }, "return id, name, age, status");
+
+    const updateAgeLte30 = await User.update({
+        age: { lte: 30 },
+        set: { salary: 75000 }
+    });
+
+    const updateAgeNe30 = await User.update({
+        age: { ne: 30 },
+        set: { status: "not-thirty" }
+    });
 
     // ==================== OUTPUT ====================
 
@@ -391,8 +538,40 @@ async function run() {
                 deliveredOrders: deliveredOrders,
                 pendingOrders: pendingOrders,
                 ordersTotalGt100: ordersTotalGt100,
-            }
+            },
+            update: {}
         }
+    };
+
+    output.queries.update = {
+        updateJohn: updateJohn,
+        updateJohnReturnAll: updateJohnReturnAll,
+        updateJohnReturnFields: updateJohnReturnFields,
+        updateAgeGt40: updateAgeGt40,
+        updateAgeGte30: updateAgeGte30,
+        updateAgeLt25: updateAgeLt25,
+        updateAgeLte30: updateAgeLte30,
+        updateAgeNe30: updateAgeNe30,
+        updateBetween: updateBetween,
+        updateOr: updateOr,
+        updateNot: updateNot,
+        updateStartsWith: updateStartsWith,
+        updateEndsWith: updateEndsWith,
+        updateContains: updateContains,
+        updateNthContain: updateNthContain,
+        updateIn: updateIn,
+        updateNin: updateNin,
+        updateExists: updateExists,
+        updateIsNull: updateIsNull,
+        updateSoundex: updateSoundex,
+        updateLevenshtein: updateLevenshtein,
+        updateDateDiff: updateDateDiff,
+        updateIsDistinctFrom: updateIsDistinctFrom,
+        updateMod: updateMod,
+        updateProductText: updateProductText,
+        updateMultipleFields: updateMultipleFields,
+        updateMultipleConditions: updateMultipleConditions,
+        updateComplex: updateComplex
     };
 
     fs.writeFileSync(

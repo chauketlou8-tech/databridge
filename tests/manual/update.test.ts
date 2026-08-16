@@ -3,7 +3,7 @@ import { DataBridge, Schema } from "../../src";
 async function main() {
     const db = await DataBridge.connect({
         provider: "postgres",
-        url: "postgresql://postgres:TemaSecondary0909%40@localhost:3001/testdb"
+        url: "postgresql://postgres:password@localhost:port/testdb"
     });
 
     const employeeSchema = new Schema({
@@ -33,11 +33,10 @@ async function main() {
 
     await employees.update({
         name: {
-            nin: ["John Doe", "Eva Marie"],
-            nthContain: {
-                second: ["a", "e"],
-                third: ["r", "n"]
-            }
+            in: ["John Doe", "Eva Marie"],
+            ilike: "Jo%D%",
+            regex: ".*@company.com",
+            any: "select * from Employees",
         },
         set: {
             age: 28,

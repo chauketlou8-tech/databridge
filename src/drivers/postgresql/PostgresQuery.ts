@@ -80,7 +80,6 @@ export default class PostgresQuery extends BaseQuery {
 
         const columns = Object.entries(this.fields).map(([field, type]) => `"${field}" ${type}`).join(",");
         const createTableSQL = `create table if not exists "${this.tableName}" (id serial primary key, ${columns})`;
-
         await this.connection.query(createTableSQL);
     }
 
@@ -185,7 +184,7 @@ export default class PostgresQuery extends BaseQuery {
             await this.ensureTableExists();
 
             const where = this.getWhere();
-            const options: unknown = this.query.data?.options || null
+            const options: unknown | null = this.query.data?.options || null
 
             const values: unknown[] = [];
             let sql: string = "";
@@ -195,6 +194,8 @@ export default class PostgresQuery extends BaseQuery {
             }
 
             const whereParts = Object.entries(where);
+
+            // Do not try to change the following:
             const findClause = whereParts.filter((part) => {
                 return part[0] !== "set"
             });
@@ -205,8 +206,8 @@ export default class PostgresQuery extends BaseQuery {
 
             const setFields = Object.entries(where.set);
 
-            // Build SET and WHERE clauses with parameterized placeholders
-            const setClause = setFields.map(([key], i) => `${key} = $${i + 1}`).join(", ");
+            // Build set and where clauses with parameterized placeholders
+            const setClause = setFields.map(([key], i) => `"${key}" = $${i + 1}`).join(", ");
             let whereClause = "";
 
             let index = setFields.length + 1;
@@ -219,6 +220,58 @@ export default class PostgresQuery extends BaseQuery {
 
             for (const clause of findClause) {
                 const isLastClause = conditionIndex === totalConditions - 1;
+
+                const cond = clause[1] as Record<string, unknown>;
+
+                // Handle top-level 'or'
+                if (clause[0] === "or" && Array.isArray(clause[1])) {
+                    const orConditions: string[] = [];
+
+                    for (const condition of clause[1]) {
+                        for (const [key, value] of Object.entries(condition)) {
+                            orConditions.push(`${key} = $${index}`);
+                            values.push(value);
+                            index++;
+                        }
+                    }
+
+                    const orClause = `(${orConditions.join(" or ")})`;
+                    isLastClause ? whereClause += orClause : whereClause += `${orClause} and `;
+
+                    conditionIndex++;
+                    continue;
+                }
+
+                // Handle top-level 'not'
+                if (clause[0] === "not" && typeof clause[1] === "object") {
+                    const notConditions: string[] = [];
+
+                    for (const [key, value] of Object.entries(clause[1] as object)) {
+                        notConditions.push(`${key} != $${index}`);
+                        values.push(value);
+                        index++;
+                    }
+
+                    const notClause = `(${notConditions.join(" and ")})`;
+                    isLastClause ? whereClause += notClause : whereClause += `${notClause} and `;
+
+                    conditionIndex++;
+                    continue;
+                }
+
+                // Handle top-level 'exists' with relation
+                if (clause[0] === "exists" && typeof clause[1] === "object" && cond.relation && cond.where) {
+                    const relation = cond.relation;
+                    const whereObj = cond.where;
+
+                    const subWhere = Object.entries(whereObj).map(([key, value]) => `"${key}" = "${value}"`).join(" and ");
+                    const existsClause = `exists (select 1 from "${relation}" where ${subWhere})`;
+
+                    isLastClause ? whereClause += existsClause : whereClause += `${existsClause} and `;
+
+                    conditionIndex++;
+                    continue;
+                }
 
                 if (typeof clause[1] === "object") {
                     const destruct = Object.entries(clause[1] as object);
@@ -393,6 +446,181 @@ export default class PostgresQuery extends BaseQuery {
                                 const combined = positionGroups.length > 1 ? positionGroups.join(" and ") : positionGroups[0];
                                 isLastOperator ? whereClause += combined : whereClause += `${combined} and `;
                                 break;
+
+                            case "ilike":
+                                isLastOperator ? whereClause += `${key} ilike $${index}` : whereClause += `${key} ilike $${index} and `
+                                values.push(`%${value}%`);
+
+                                index++;
+                                break;
+
+                            case "regex":
+                                isLastOperator ? whereClause += `"${key}" ~ $${index}` : whereClause += `"${key}" ~ $${index} and `
+                                values.push(value);
+
+                                index++;
+                                break;
+
+                            case "soundex":
+                                if (typeof value !== "string" || value === "") {
+                                    throw new QueryError("Value for soundex query must be a non-empty string", "D033");
+                                }
+
+                                const firstLetters = value.trim().substring(0, 3);
+
+                                isLastOperator ? whereClause += `"${key}" ilike $${index}` : whereClause += `"${key}" ilike $${index} and `
+                                values.push(`${firstLetters}%`);
+
+                                index++;
+                                break;
+
+                            case "levenshtein":
+                                if (typeof value !== "string" || value === "") {
+                                    throw new QueryError("Value for levenshtein query must be a non-empty string", "D033");
+                                }
+
+                                const term = value.trim();
+                                const firstLettersLev = term.substring(0, 3);
+
+                                const levConditions = [
+                                    `lower("${key}") = lower($${index})`,
+                                    `${key} ilike $${index + 1}`,
+                                    `${key} ilike $${index + 2}`,
+                                    `${key} ilike $${index + 3}`,
+                                    `${key} ilike $${index + 4}`
+                                ];
+
+                                const levCombined = `(${levConditions.join(" or ")})`;
+                                isLastOperator ? whereClause += levCombined : whereClause += `${levCombined} and `
+                                values.push(term, `${term}%`, `%${term}%`, `${firstLettersLev}%`, `%${term}`);
+
+                                index += 5;
+                                break;
+
+                            case "mod":
+                                if (!Array.isArray(value) || value.length !== 2) {
+                                    throw new QueryError("Value for mod query must be an array with 2 elements", "D033");
+                                }
+
+                                isLastOperator ? whereClause += `mod(${key}, $${index}) = $${index + 1}` : whereClause += `mod(${key}, $${index}) = $${index + 1} and `
+                                values.push(value[0], value[1]);
+
+                                index += 2;
+                                break;
+
+                            case "exists":
+                                if (typeof value !== "boolean") {
+                                    throw new QueryError("Value for exists query must be a boolean", "D033");
+                                }
+
+                                isLastOperator ? whereClause += value ? `"${key}" is not null` : `"${key}" is null` : whereClause += value ? `"${key}" is not null and ` : `"${key}" is null and `
+                                break;
+
+                            case "isNull":
+                                if (typeof value !== "boolean") {
+                                    throw new QueryError("Value for isNull query must be a boolean", "D033");
+                                }
+
+                                isLastOperator ? whereClause += value ? `"${key}" is null` : `"${key}" is not null` : whereClause += value ? `"${key}" is null and ` : `"${key}" is not null and `
+                                break;
+
+                            case "isDistinctFrom":
+                                isLastOperator ? whereClause += `"${key}" is distinct from $${index}` : whereClause += `"${key}" is distinct from $${index} and `
+                                values.push(value);
+
+                                index++;
+                                break;
+
+                            case "any":
+                                if (typeof value !== "string" || value === "") {
+                                    throw new QueryError("Value for any query must be a non-empty string subquery", "D033");
+                                }
+
+                                if (!/^\s*select/i.test(value)) {
+                                    throw new QueryError("Value for any query must be a select statement", "D033");
+                                }
+
+                                isLastOperator ? whereClause += `"${key}" = any ("${value}")` : whereClause += `"${key}" = any ("${value}") and `
+                                break;
+
+                            case "all":
+                                if (typeof value === "string") {
+                                    if (value === "") {
+                                        throw new QueryError("Value for all query must be a non-empty string", "D033");
+                                    }
+
+                                    if (!/^\s*select/i.test(value)) {
+                                        throw new QueryError("Value for all query must be a select statement", "D033");
+                                    }
+
+                                    isLastOperator ? whereClause += `"${key}" = all ("${value}")` : whereClause += `"${key}" = all ("${value}") and `
+                                }
+
+                                else if (Array.isArray(value)) {
+                                    if (value.length === 0) {
+                                        throw new QueryError("Value for all query must be a non-empty array", "D033");
+                                    }
+
+                                    const allPlaceholders = value.map((_, i) => `$${index + i}`).join(", ");
+                                    isLastOperator ? whereClause += `"${key}" in (${allPlaceholders})` : whereClause += `"${key}" in (${allPlaceholders}) and `
+
+                                    values.push(...value);
+                                    index += value.length;
+                                }
+
+                                else {
+                                    throw new QueryError("Value for all query must be a string or array", "D033");
+                                }
+
+                                break;
+
+                            case "text":
+                                if (typeof value !== "string" || value === "") {
+                                    throw new QueryError("Value for text query must be a non-empty string", "D033");
+                                }
+
+                                const tsquery = value.trim().split(/\s+/).map((word: string) => word.replace(/['\\]/g, '')).filter((word: string) => word.length > 0).join(" & ");
+
+                                if (!tsquery) {
+                                    throw new QueryError("Value for text query produced invalid tsquery", "D033");
+                                }
+
+                                isLastOperator ? whereClause += `to_tsvector("${key}") @@ to_tsquery($${index})` : whereClause += `to_tsvector("${key}") @@ to_tsquery($${index}) and `
+                                values.push(tsquery);
+
+                                index++;
+                                break;
+
+                            case "dateDiff":
+                                if (!Array.isArray(value) || value.length !== 2) {
+                                    throw new QueryError("Value for dateDiff query must be an array with 2 elements", "D033");
+                                }
+
+                                const [date1, date2] = value;
+                                const daysMatch = String(date2).match(/^(\d+)\s*days?$/i);
+
+                                if (!daysMatch) {
+                                    throw new QueryError("Value for dateDiff query must be like '90 days'", "D033");
+                                }
+
+                                const days = parseInt(daysMatch[1]);
+                                let dateExpr: string;
+
+                                if (String(date1).toLowerCase() === "now") {
+                                    dateExpr = "now()";
+                                }
+
+                                else {
+                                    dateExpr = `$${index}`;
+                                    values.push(date1);
+                                    index++;
+                                }
+
+                                isLastOperator ? whereClause += `extract(day from (${dateExpr} - "${key}")) <= $${index}` : whereClause += `extract(day from (${dateExpr} - ${key})) <= $${index} and `
+                                values.push(days);
+
+                                index++;
+                                break;
                         }
 
                         operatorIndex++;
@@ -409,28 +637,25 @@ export default class PostgresQuery extends BaseQuery {
             }
 
             sql += `update "${this.tableName}" set ${setClause} where ${whereClause}`
-            console.log(sql, values);
 
-            // Handle RETURNING clause if specified in options
-            // if (this.isReturnOption(options)) {
-            //     const option = options as string;
-            //     const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
-            //
-            //     if (parts[1].trim().toLowerCase() === "all") {
-            //         sql += ` returning *`
-            //     }
-            //
-            //     else {
-            //         const fields = parts.slice(1);
-            //         const returnFields = fields.map((field) => `${field}`).join(", ");
-            //         sql += ` returning ${returnFields}`
-            //     }
-            // }
-            //
-            // const results = await this.executeQuery(sql, values);
-            //
-            // return options ? results : null;
-            return null;
+            // Handle returning clause if specified in options
+            if (this.isReturnOption(options)) {
+                const option = options as string;
+                const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
+
+                if (parts[1].trim().toLowerCase() === "all") {
+                    sql += ` returning *`
+                }
+
+                else {
+                    const fields = parts.slice(1);
+                    const returnFields = fields.map((field) => `${field}`).join(", ");
+                    sql += ` returning ${returnFields}`
+                }
+            }
+
+            const results = await this.executeQuery(sql, values);
+            return options ? results : null;
         }
 
         catch (error) {
@@ -604,7 +829,7 @@ export default class PostgresQuery extends BaseQuery {
                 throw new QueryError(`"all" operator requires a non-empty array for field "${key}"`, "D036");
             }
 
-            const conditions = value.all.map(() => `"${key}" ILIKE $${idx.value}`).join(' and ');
+            const conditions = value.all.map(() => `"${key}" ilike $${idx.value}`).join(' and ');
             whereClauses.push(`(${conditions})`);
 
             for (const item of value.all) {
