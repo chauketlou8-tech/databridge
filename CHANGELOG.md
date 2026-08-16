@@ -57,12 +57,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CouchDB guide and documentation
 - Auto-sliding database carousel on homepage
 - Particle animation background on hero section
-- Query operators: or, not, between, in
+- Query operators: or, not, between, in, gt, gte, lt, lte, ne, nin, regex, startsWith, endsWith, contains, nthContain, mod, elemMatch, size, any, all, text, ilike, soundex, levenshtein, dateDiff, isDistinctFrom, isNull, exists, expr
+- Update operation with support for all query operators
+- Update with RETURNING clause support (return all or specific fields)
 - Data validation against schema for CouchDB
 - MariaDB and MySQL drivers with full query support
 - Shared utility methods in BaseQuery: getWhere(), getFieldTypes(), sterilizeResult(), processRowData()
 - Result sterilization for SQL-based drivers to return proper JavaScript types
-- Query operators: gt, gte, lt, lte, ne, nin, regex, startsWith, endsWith, contains, nthContain, mod, elemMatch, size, any, all, text, ilike, soundex, levenshtein, dateDiff, isDistinctFrom, isNull, exists, expr
 
 ### Fixed
 - Type mismatch between Driver interface and abstract Driver class
@@ -98,6 +99,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSON/ARRAY fields now properly parsed in SQL-based drivers
 - BUFFER fields now properly reconstructed in SQL-based drivers
 - PostgreSQL text operator to properly format tsquery for multi-word searches
+- Update method to correctly handle top-level `or`, `not`, and `exists` operators
+- Update method to properly quote column names in SET and WHERE clauses
+- Update method to correctly handle `set` field exclusion from WHERE clause
+- Update method to support all query operators including nested operators
 
 ---
 
