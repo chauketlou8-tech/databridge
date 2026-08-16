@@ -49,7 +49,7 @@ export default class Database implements DB {
      *
      * @example
      * await db.close();
-     */
+     **/
     public async close(): Promise<void> {
         return await this.driver.disconnect();
     }

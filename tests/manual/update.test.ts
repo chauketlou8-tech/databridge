@@ -33,10 +33,11 @@ async function main() {
 
     await employees.update({
         name: {
-            in: ["John Doe", "Eva Marie"],
-        },
-        age: {
-            between: [20, 35]
+            nin: ["John Doe", "Eva Marie"],
+            nthContain: {
+                second: ["a", "e"],
+                third: ["r", "n"]
+            }
         },
         set: {
             age: 28,

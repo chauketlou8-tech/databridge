@@ -16,7 +16,7 @@ export default abstract class BaseQuery {
     protected fields: Record<string, any> = {};
     protected tableName: string = "";
 
-    protected constructor(query: Query) {
+    protected constructor(query: Query, model: Model | null = null) {
         this.query = query;
         this.operation = this.query.operation;
         this.fields = {};
@@ -253,7 +253,9 @@ export default abstract class BaseQuery {
             if (fieldType === "OBJECT" || fieldType === "JSON" || fieldType === "ARRAY") {
                 if (typeof value === "object" && !(value instanceof Date)) {
                     processedRow[key] = JSON.stringify(value);
-                } else {
+                }
+
+                else {
                     processedRow[key] = value;
                 }
                 continue;

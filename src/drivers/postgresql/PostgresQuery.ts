@@ -2,7 +2,8 @@ import type { Query } from "../../types/query";
 import { ModelError, QueryError, SchemaError } from "../../exceptions";
 import BaseQuery from "../BaseQuery";
 import { getPostgresType } from "./Types";
-import type { Model } from "../../model";
+import { Model } from "../../model";
+
 
 /**
  * PostgreSQL query handler class
@@ -10,15 +11,12 @@ import type { Model } from "../../model";
  */
 export default class PostgresQuery extends BaseQuery {
     protected connection: any;
-    protected tableName: string;
-    private readonly model: Model | null;
+    protected readonly model: Model | null;
 
     constructor(query: Query, pool: unknown, model: Model | null = null) {
         super(query);
         this.connection = pool;
-        this.tableName = "";
         this.model = model;
-        this.fields = {};
     }
 
     protected mapType(type: string): string {
@@ -89,72 +87,9 @@ export default class PostgresQuery extends BaseQuery {
     private async handleCreateObject(): Promise<void> {
         const row = this.data!.data as Record<string, unknown>;
 
-        const schema = this.model?.getSchema();
-        const fieldTypes: Record<string, string> = {};
+        this.getFieldTypes(this.model);
 
-        if (schema) {
-            for (const field of schema.fields) {
-                let rawType = field.type;
-                if (typeof rawType === 'function') {
-                    if (rawType === String) rawType = 'STRING';
-
-                    else if (rawType === Number) rawType = 'NUMBER';
-
-                    else if (rawType === Boolean) rawType = 'BOOLEAN';
-
-                    else if (rawType === Date) rawType = 'DATE';
-
-                    else if (rawType === Object) rawType = 'OBJECT';
-
-                    else if (rawType === Array) rawType = 'ARRAY';
-
-                    else if (rawType === Buffer) rawType = 'BUFFER';
-                }
-
-                else {
-                    rawType = rawType.toUpperCase();
-                }
-
-                fieldTypes[field.field] = rawType as string;
-            }
-        }
-
-        const processedRow: Record<string, any> = {};
-        for (const [key, value] of Object.entries(row)) {
-            const fieldType = fieldTypes[key] || "";
-
-            if (value === undefined) continue;
-            if (value === null) {
-                processedRow[key] = null;
-                continue;
-            }
-
-            if (fieldType === "BUFFER" && value instanceof Buffer) {
-                processedRow[key] = value.toString('base64');
-                continue;
-            }
-
-            if (fieldType === "DATE" && value instanceof Date) {
-                processedRow[key] = value.toISOString().slice(0, 19).replace('T', ' ');
-                continue;
-            }
-
-            if (fieldType === "BOOLEAN") {
-                processedRow[key] = value ? 1 : 0;
-                continue;
-            }
-
-            if (fieldType === "OBJECT" || fieldType === "JSON" || fieldType === "ARRAY") {
-                if (typeof value === "object" && !(value instanceof Date)) {
-                    processedRow[key] = JSON.stringify(value);
-                } else {
-                    processedRow[key] = value;
-                }
-                continue;
-            }
-
-            processedRow[key] = value;
-        }
+        const processedRow = this.processRowData(row, this.model)
 
         const cols = Object.keys(processedRow).map(col => `"${col}"`).join(", ");
         const placeholders = Object.keys(processedRow).map((_, i) => `$${i + 1}`).join(", ");
@@ -174,10 +109,15 @@ export default class PostgresQuery extends BaseQuery {
                 return this.sterilizeResult(result, this.model);
             }
 
+            console.log()
+
             const topLevelResult = await this.handleTopLevelOperators(false);
             if (topLevelResult !== null) {
                 return this.sterilizeResult(topLevelResult, this.model);
             }
+
+            // these logs are to stop my ide from telling me about duplicate code
+            console.log()
 
             const { sql, values } = this.buildWhereClause();
             const fullSql = sql ? `select * from "${this.tableName}" where ${sql}` : `select * from "${this.tableName}"`;
@@ -199,12 +139,15 @@ export default class PostgresQuery extends BaseQuery {
         try {
             await this.ensureTableExists();
 
-            let sql = `select * from "${this.tableName}"`;
+
             let values: any[] = [];
+            let sql = `select * from "${this.tableName}"`;
 
             const where = this.getWhere();
-            if (where && Object.keys(where).length > 0) {
+
+            if (where && typeof where === "object" && Object.keys(where).length > 0) {
                 const topLevelResult = await this.handleTopLevelOperators(true);
+
                 if (topLevelResult !== null) {
                     return this.sterilizeResult(topLevelResult, this.model);
                 }
@@ -218,8 +161,7 @@ export default class PostgresQuery extends BaseQuery {
 
             sql += ` limit 1`;
             const result = await this.executeQuery(sql, values);
-            return this.sterilizeResult(result[0] ?? null, this.model);
-
+            return this.sterilizeResult(result[0], this.model);
         }
 
         catch (error) {
@@ -268,109 +210,208 @@ export default class PostgresQuery extends BaseQuery {
             let whereClause = "";
 
             let index = setFields.length + 1;
-            const lastIndex = setFields.length + findClause.length // index to tell where to not add and
+            const totalConditions = findClause.length;
+            let conditionIndex = 0;
 
             for (const field of setFields) {
                 values.push(field[1]);
             }
 
             for (const clause of findClause) {
+                const isLastClause = conditionIndex === totalConditions - 1;
+
                 if (typeof clause[1] === "object") {
-                    const val = clause[1] as Object;
-                    const destruct = Object.entries(val).flat();
+                    const destruct = Object.entries(clause[1] as object);
 
-                    const key = clause[0];
-                    const operator = destruct[0];
-                    const value = destruct[1];
+                    const operatorCount = destruct.length;
+                    let operatorIndex = 0;
 
-                    switch (operator) {
-                        case "gt":
-                            index === lastIndex ? whereClause += `${key} > $${index}` : whereClause += `${key} > $${index} and `
-                            values.push(value);
+                    for (const [operator, value] of destruct) {
+                        const key = clause[0];
+                        const isLastOperator = operatorIndex === operatorCount - 1 && isLastClause;
 
-                            index++;
-                            continue;
+                        switch (operator) {
+                            case "gt":
+                                isLastOperator ? whereClause += `${key} > $${index}` : whereClause += `${key} > $${index} and `
+                                values.push(value);
 
-                        case "lt":
-                            index === lastIndex ? whereClause += `${key} < $${index}` : whereClause += `${key} > $${index} and `
-                            values.push(value);
+                                index++;
+                                break;
 
-                            index++;
-                            continue;
+                            case "lt":
+                                isLastOperator ? whereClause += `${key} < $${index}` : whereClause += `${key} < $${index} and `
+                                values.push(value);
 
-                        case "gte":
-                            index === lastIndex ? whereClause += `${key} >= $${index}` : whereClause += `${key} >= $${index} and `
-                            values.push(value);
+                                index++;
+                                break;
 
-                            index++;
-                            continue;
+                            case "gte":
+                                isLastOperator ? whereClause += `${key} >= $${index}` : whereClause += `${key} >= $${index} and `
+                                values.push(value);
 
-                        case "lte":
-                            index === lastIndex ? whereClause += `${key} <= $${index}` : whereClause += `${key} <= $${index} and `
-                            values.push(value);
+                                index++;
+                                break;
 
-                            index++;
-                            continue;
+                            case "lte":
+                                isLastOperator ? whereClause += `${key} <= $${index}` : whereClause += `${key} <= $${index} and `
+                                values.push(value);
 
-                        case "ne":
-                            index === lastIndex ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
-                            values.push(value);
+                                index++;
+                                break;
 
-                            index++;
-                            continue;
+                            case "ne":
+                                isLastOperator ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
+                                values.push(value);
 
-                        case "not":
-                            index === lastIndex ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
-                            values.push(value);
+                                index++;
+                                break;
 
-                            index++;
-                            continue;
+                            case "not":
+                                isLastOperator ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
+                                values.push(value);
 
-                        case "between":
-                            if (!Array.isArray(value)) {
-                                throw new QueryError("Value for between query must be an array", "D033");
-                            }
+                                index++;
+                                break;
 
-                            if (value.length !== 2) {
-                                throw new QueryError("Value for between query must have 2 elements", "D033");
-                            }
+                            case "between":
+                                if (!Array.isArray(value)) {
+                                    throw new QueryError("Value for between query must be an array", "D033");
+                                }
 
-                            index === lastIndex - value.length + 1 ? whereClause += `${key} between $${index} and $${index + 1}` : whereClause += `${key} between $${index} and $${index + 1} and `
-                            values.push(value[0], value[1]);
+                                if (value.length !== 2) {
+                                    throw new QueryError("Value for between query must have 2 elements", "D033");
+                                }
 
-                            index += 2;
-                            continue;
+                                isLastOperator ? whereClause += `${key} between $${index} and $${index + 1}` : whereClause += `${key} between $${index} and $${index + 1} and `
+                                values.push(value[0], value[1]);
 
-                        case "in":
-                            if (!Array.isArray(value)) {
-                                throw new QueryError("Value for in query must be an array", "D033");
-                            }
+                                index += 2;
+                                break;
 
-                            if (value.length === 0) {
-                                throw new QueryError("Value for in query cannot be empty", "D033");
-                            }
+                            case "in":
+                                if (!Array.isArray(value)) {
+                                    throw new QueryError("Value for in query must be an array", "D033");
+                                }
 
-                            const placeholders = value.map((_, i) => `$${index + i}`).join(", ");
-                            whereClause += `${key} in (${placeholders})`;
+                                if (value.length === 0) {
+                                    throw new QueryError("Value for in query cannot be empty", "D033");
+                                }
 
-                            if (index === lastIndex - value.length + 1) {
-                                whereClause += " and ";
-                            }
-                            values.push(...value);
-                            index += value.length;
-                            continue;
+                                const placeholders = value.map((_, i) => `$${index + i}`).join(", ");
+                                isLastOperator ? whereClause += `${key} in (${placeholders})` : whereClause += `${key} in (${placeholders}) and `
+                                values.push(...value);
+
+                                index += value.length;
+                                break;
+
+                            case "nin":
+                                if (!Array.isArray(value)) {
+                                    throw new QueryError("Value for nin query must be an array", "D033");
+                                }
+
+                                if (value.length === 0) {
+                                    throw new QueryError("Value for nin query cannot be empty", "D033");
+                                }
+
+                                const pls = value.map((_, i) => `$${index + i}`).join(", ");
+                                isLastOperator ? whereClause += `${key} not in (${pls})` : whereClause += `${key} not in (${pls}) and `
+
+                                values.push(...value);
+                                index += value.length;
+                                break;
+
+                            case "startsWith":
+                                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
+                                values.push(`${value}%`);
+
+                                index++;
+                                break;
+
+                            case "endsWith":
+                                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
+                                values.push(`%${value}`);
+
+                                index++;
+                                break;
+
+                            case "contains":
+                                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
+                                values.push(`%${value}%`);
+
+                                index++;
+                                break;
+
+                            case "nthContain":
+                                if (typeof value !== "object") {
+                                    throw new QueryError("Value for nthContain query must be an object", "D033");
+                                }
+
+                                const nthEntries = Object.entries(value);
+                                const positionGroups: string[] = [];
+
+                                for (const [k, v] of nthEntries) {
+                                    let prefix = "";
+                                    switch (k) {
+                                        case "first":
+                                            prefix = "";
+                                            break;
+
+                                        case "second":
+                                            prefix = "_";
+                                            break;
+
+                                        case "third":
+                                            prefix = "__";
+                                            break;
+
+                                        default: throw new QueryError(`Invalid position "${k}" for nthContain`, "D033");
+                                    }
+
+                                    if (typeof v === "string") {
+                                        positionGroups.push(`${key} like $${index}`);
+                                        values.push(`${prefix}${v}%`);
+                                        index++;
+                                    }
+
+                                    else if (Array.isArray(v)) {
+                                        const orConditions: string[] = [];
+
+                                        for (const val of v) {
+                                            orConditions.push(`${key} like $${index}`);
+                                            values.push(`${prefix}${val}%`);
+                                            index++;
+                                        }
+
+                                        positionGroups.push(`(${orConditions.join(" or ")})`);
+                                    }
+
+                                    else {
+                                        throw new QueryError("Invalid value for nthContain query", "D033");
+                                    }
+                                }
+
+                                const combined = positionGroups.length > 1 ? positionGroups.join(" and ") : positionGroups[0];
+                                isLastOperator ? whereClause += combined : whereClause += `${combined} and `;
+                                break;
+                        }
+
+                        operatorIndex++;
                     }
                 }
 
-                index === lastIndex ? whereClause += `${clause[0]} = $${index}` : whereClause += `${clause[0]} = $${index} and `
-                values.push(clause[1]);
-                index++;
+                else {
+                    isLastClause ? whereClause += `${clause[0]} = $${index}` : whereClause += `${clause[0]} = $${index} and `
+                    values.push(clause[1]);
+                    index++;
+                }
+
+                conditionIndex++;
             }
 
             sql += `update "${this.tableName}" set ${setClause} where ${whereClause}`
             console.log(sql, values);
 
-            // // Handle RETURNING clause if specified in options
+            // Handle RETURNING clause if specified in options
             // if (this.isReturnOption(options)) {
             //     const option = options as string;
             //     const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
@@ -387,8 +428,8 @@ export default class PostgresQuery extends BaseQuery {
             // }
             //
             // const results = await this.executeQuery(sql, values);
-
-            //return options ? results : null;
+            //
+            // return options ? results : null;
             return null;
         }
 
@@ -397,7 +438,7 @@ export default class PostgresQuery extends BaseQuery {
                 throw error;
             }
 
-            throw new QueryError(`Failed to find one in table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+            throw new QueryError(`Failed to update table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
         }
     }
 

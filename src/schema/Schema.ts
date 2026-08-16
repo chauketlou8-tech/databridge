@@ -21,7 +21,7 @@ export class Schema {
      */
     private run() {
         // Check if schema definition exists and has fields
-        if (!this.definition || !Object.keys(this.definition).length) {
+        if (!this.definition || typeof this.definition !== "object" || !Object.keys(this.definition).length) {
             throw new SchemaError("Schema definition invalid or malformed", "D040")
         }
 

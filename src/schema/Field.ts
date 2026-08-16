@@ -20,10 +20,12 @@ export class Field {
 
             return normalized;
         }
+
         catch (error) {
             if (error instanceof SchemaError) {
                 throw error;
             }
+
             throw new SchemaError(`Invalid type definition for field "${this.field}": ${error instanceof Error ? error.message : String(error)}`, "D040");
         }
     }

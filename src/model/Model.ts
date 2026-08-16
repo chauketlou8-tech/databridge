@@ -207,17 +207,13 @@ export class Model implements MDL {
      * @param name - The name of the model/table
      * @throws {SchemaError} If schema or name is invalid
      */
-    public static async make(
-        Schema: Schema,
-        driver: Driver,
-        name: string
-    ): Promise<void> {
+    public static async make(Schema: Schema, driver: Driver, name: string): Promise<void> {
         if (!Schema) {
             throw new SchemaError("Schema is missing or is of wrong type", "D045");
         }
 
         if (!name) {
-            throw new SchemaError("Model name is missing", "D045");
+            throw new ModelError("Model name is missing", "D055");
         }
 
         const modelQuery: Query = {
