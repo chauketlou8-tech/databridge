@@ -269,3 +269,14 @@ This file provides a chronological history of the DataBridge project, documentin
 
 #### Model Improvements
 - Added `update()` method to Model class for updating documents
+
+### 2026-08-16
+
+#### PostgresQuery Update Improvements
+- Refactored `handleUpdate()` method to properly handle top-level `or`, `not`, and `exists` operators
+- Added support for all query operators in update operations
+- Fixed column quoting in SET and WHERE clauses
+- Fixed `set` field exclusion from WHERE clause during update
+- Added RETURNING clause support for update operations
+- Update method now matches the same pattern as `handleFind()` and `handleFindOne()`
+- Added comprehensive manual tests for all update operators
