@@ -5,7 +5,7 @@ import * as path from "path";
 async function run() {
     const db = await DataBridge.connect({
         provider: "postgres",
-        url: "postgresql://postgres:password@localhost:port/testdb"
+        url: "postgresql://postgres:TemaSecondary0909%40@localhost:3001/testdb"
     });
 
     // ==================== MODELS WITH ALL TYPE VARIATIONS ====================
@@ -467,6 +467,78 @@ async function run() {
         set: { status: "not-thirty" }
     });
 
+    // ==================== UPDATE ONE QUERIES ====================
+
+// Update one by name
+    const updateOneJohn = await User.updateOne({
+        name: "John Doe",
+        set: { age: 32 }
+    });
+
+// Update one by name with return all
+    const updateOneJohnReturnAll = await User.updateOne({
+        name: "John Doe",
+        set: { age: 33 }
+    }, "return all");
+
+// Update one by name with return specific fields
+    const updateOneJohnReturnFields = await User.updateOne({
+        name: "John Doe",
+        set: { age: 34 }
+    }, "return id, name, age");
+
+// Update one by email
+    const updateOneByEmail = await User.updateOne({
+        email: "sarah@company.com",
+        set: { status: "updated-by-email" }
+    });
+
+// Update one with gt operator
+    const updateOneAgeGt40 = await User.updateOne({
+        age: { gt: 40 },
+        set: { status: "senior-one" }
+    });
+
+// Update one with gte operator
+    const updateOneAgeGte30 = await User.updateOne({
+        age: { gte: 30 },
+        set: { isActive: false }
+    });
+
+// Update one with between
+    const updateOneBetween = await User.updateOne({
+        age: { between: [25, 35] },
+        set: { salary: 85000 }
+    });
+
+// Update one with startsWith
+    const updateOneStartsWith = await User.updateOne({
+        name: { startsWith: "J" },
+        set: { status: "J-one" }
+    });
+
+// Update one with contains
+    const updateOneContains = await User.updateOne({
+        name: { contains: "Smith" },
+        set: { status: "Smith-one" }
+    });
+
+// Update one with in
+    const updateOneIn = await User.updateOne({
+        name: { in: ["John Doe", "Sarah Smith"] },
+        set: { status: "in-one" }
+    });
+
+// Update one with multiple fields
+    const updateOneMultipleFields = await User.updateOne({
+        name: "Mike Johnson",
+        set: {
+            age: 45,
+            salary: 130000,
+            status: "updated-one"
+        }
+    }, "return all");
+
     // ==================== OUTPUT ====================
 
     const output = {
@@ -539,40 +611,53 @@ async function run() {
                 pendingOrders: pendingOrders,
                 ordersTotalGt100: ordersTotalGt100,
             },
-            update: {}
+            update: {
+                updateJohn: updateJohn,
+                updateJohnReturnAll: updateJohnReturnAll,
+                updateJohnReturnFields: updateJohnReturnFields,
+                updateAgeGt40: updateAgeGt40,
+                updateAgeGte30: updateAgeGte30,
+                updateAgeLt25: updateAgeLt25,
+                updateAgeLte30: updateAgeLte30,
+                updateAgeNe30: updateAgeNe30,
+                updateBetween: updateBetween,
+                updateOr: updateOr,
+                updateNot: updateNot,
+                updateStartsWith: updateStartsWith,
+                updateEndsWith: updateEndsWith,
+                updateContains: updateContains,
+                updateNthContain: updateNthContain,
+                updateIn: updateIn,
+                updateNin: updateNin,
+                updateExists: updateExists,
+                updateIsNull: updateIsNull,
+                updateSoundex: updateSoundex,
+                updateLevenshtein: updateLevenshtein,
+                updateDateDiff: updateDateDiff,
+                updateIsDistinctFrom: updateIsDistinctFrom,
+                updateMod: updateMod,
+                updateProductText: updateProductText,
+                updateMultipleFields: updateMultipleFields,
+                updateMultipleConditions: updateMultipleConditions,
+                updateComplex: updateComplex
+            },
+            updateOne: {
+                updateOneJohn: updateOneJohn,
+                updateOneJohnReturnAll: updateOneJohnReturnAll,
+                updateOneJohnReturnFields: updateOneJohnReturnFields,
+                updateOneByEmail: updateOneByEmail,
+                updateOneAgeGt40: updateOneAgeGt40,
+                updateOneAgeGte30: updateOneAgeGte30,
+                updateOneBetween: updateOneBetween,
+                updateOneStartsWith: updateOneStartsWith,
+                updateOneContains: updateOneContains,
+                updateOneIn: updateOneIn,
+                updateOneMultipleFields: updateOneMultipleFields
+            }
         }
     };
 
-    output.queries.update = {
-        updateJohn: updateJohn,
-        updateJohnReturnAll: updateJohnReturnAll,
-        updateJohnReturnFields: updateJohnReturnFields,
-        updateAgeGt40: updateAgeGt40,
-        updateAgeGte30: updateAgeGte30,
-        updateAgeLt25: updateAgeLt25,
-        updateAgeLte30: updateAgeLte30,
-        updateAgeNe30: updateAgeNe30,
-        updateBetween: updateBetween,
-        updateOr: updateOr,
-        updateNot: updateNot,
-        updateStartsWith: updateStartsWith,
-        updateEndsWith: updateEndsWith,
-        updateContains: updateContains,
-        updateNthContain: updateNthContain,
-        updateIn: updateIn,
-        updateNin: updateNin,
-        updateExists: updateExists,
-        updateIsNull: updateIsNull,
-        updateSoundex: updateSoundex,
-        updateLevenshtein: updateLevenshtein,
-        updateDateDiff: updateDateDiff,
-        updateIsDistinctFrom: updateIsDistinctFrom,
-        updateMod: updateMod,
-        updateProductText: updateProductText,
-        updateMultipleFields: updateMultipleFields,
-        updateMultipleConditions: updateMultipleConditions,
-        updateComplex: updateComplex
-    };
+
 
     fs.writeFileSync(
         path.join(process.cwd(), "test-output.bridge"),

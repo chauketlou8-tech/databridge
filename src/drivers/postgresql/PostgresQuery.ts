@@ -1,8 +1,8 @@
-import type { Query } from "../../types/query";
-import { ModelError, QueryError, SchemaError } from "../../exceptions";
+import type {Query} from "../../types/query";
+import {ModelError, QueryError, SchemaError} from "../../exceptions";
 import BaseQuery from "../BaseQuery";
-import { getPostgresType } from "./Types";
-import { Model } from "../../model";
+import {getPostgresType} from "./Types";
+import {Model} from "../../model";
 
 
 /**
@@ -41,6 +41,12 @@ export default class PostgresQuery extends BaseQuery {
 
                 case "update":
                     return await this.handleUpdate();
+
+                case "updateOne":
+                    return this.handleUpdateOne();
+
+                case "delete":
+                    return await this.handleDelete();
 
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
@@ -285,6 +291,8 @@ export default class PostgresQuery extends BaseQuery {
 
                         switch (operator) {
                             case "gt":
+                                this.validateType("gt", value);
+
                                 isLastOperator ? whereClause += `${key} > $${index}` : whereClause += `${key} > $${index} and `
                                 values.push(value);
 
@@ -292,6 +300,8 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "lt":
+                                this.validateType("lt", value);
+
                                 isLastOperator ? whereClause += `${key} < $${index}` : whereClause += `${key} < $${index} and `
                                 values.push(value);
 
@@ -299,6 +309,8 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "gte":
+                                this.validateType("gte", value);
+
                                 isLastOperator ? whereClause += `${key} >= $${index}` : whereClause += `${key} >= $${index} and `
                                 values.push(value);
 
@@ -306,20 +318,17 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "lte":
+                                this.validateType("lte", value);
+
                                 isLastOperator ? whereClause += `${key} <= $${index}` : whereClause += `${key} <= $${index} and `
                                 values.push(value);
 
                                 index++;
                                 break;
 
-                            case "ne":
-                                isLastOperator ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
-                                values.push(value);
+                            case "ne": case "not":
+                                this.validateType(operator, value);
 
-                                index++;
-                                break;
-
-                            case "not":
                                 isLastOperator ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
                                 values.push(value);
 
@@ -327,13 +336,7 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "between":
-                                if (!Array.isArray(value)) {
-                                    throw new QueryError("Value for between query must be an array", "D033");
-                                }
-
-                                if (value.length !== 2) {
-                                    throw new QueryError("Value for between query must have 2 elements", "D033");
-                                }
+                                this.validateType("between", value);
 
                                 isLastOperator ? whereClause += `${key} between $${index} and $${index + 1}` : whereClause += `${key} between $${index} and $${index + 1} and `
                                 values.push(value[0], value[1]);
@@ -342,15 +345,9 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "in":
-                                if (!Array.isArray(value)) {
-                                    throw new QueryError("Value for in query must be an array", "D033");
-                                }
+                                this.validateType("in", value);
 
-                                if (value.length === 0) {
-                                    throw new QueryError("Value for in query cannot be empty", "D033");
-                                }
-
-                                const placeholders = value.map((_, i) => `$${index + i}`).join(", ");
+                                const placeholders = value.map((_:any, i:number) => `$${index + i}`).join(", ");
                                 isLastOperator ? whereClause += `${key} in (${placeholders})` : whereClause += `${key} in (${placeholders}) and `
                                 values.push(...value);
 
@@ -358,15 +355,9 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "nin":
-                                if (!Array.isArray(value)) {
-                                    throw new QueryError("Value for nin query must be an array", "D033");
-                                }
+                                this.validateType("nin", value);
 
-                                if (value.length === 0) {
-                                    throw new QueryError("Value for nin query cannot be empty", "D033");
-                                }
-
-                                const pls = value.map((_, i) => `$${index + i}`).join(", ");
+                                const pls = value.map((_:any, i: number) => `$${index + i}`).join(", ");
                                 isLastOperator ? whereClause += `${key} not in (${pls})` : whereClause += `${key} not in (${pls}) and `
 
                                 values.push(...value);
@@ -374,6 +365,8 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "startsWith":
+                                this.validateType("startsWith", value);
+
                                 isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
                                 values.push(`${value}%`);
 
@@ -381,6 +374,8 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "endsWith":
+                                this.validateType("endsWith", value);
+
                                 isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
                                 values.push(`%${value}`);
 
@@ -388,6 +383,8 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "contains":
+                                this.validateType("contains", value);
+
                                 isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
                                 values.push(`%${value}%`);
 
@@ -395,9 +392,7 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "nthContain":
-                                if (typeof value !== "object") {
-                                    throw new QueryError("Value for nthContain query must be an object", "D033");
-                                }
+                                this.validateType("nthContain", value);
 
                                 const nthEntries = Object.entries(value);
                                 const positionGroups: string[] = [];
@@ -417,7 +412,8 @@ export default class PostgresQuery extends BaseQuery {
                                             prefix = "__";
                                             break;
 
-                                        default: throw new QueryError(`Invalid position "${k}" for nthContain`, "D033");
+                                        default:
+                                            throw new QueryError(`Invalid position "${k}" for nthContain`, "D033");
                                     }
 
                                     if (typeof v === "string") {
@@ -448,6 +444,8 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "ilike":
+                                this.validateType("ilike", value);
+
                                 isLastOperator ? whereClause += `${key} ilike $${index}` : whereClause += `${key} ilike $${index} and `
                                 values.push(`%${value}%`);
 
@@ -455,6 +453,8 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "regex":
+                                this.validateType("regex", value);
+
                                 isLastOperator ? whereClause += `"${key}" ~ $${index}` : whereClause += `"${key}" ~ $${index} and `
                                 values.push(value);
 
@@ -462,9 +462,7 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "soundex":
-                                if (typeof value !== "string" || value === "") {
-                                    throw new QueryError("Value for soundex query must be a non-empty string", "D033");
-                                }
+                                this.validateType("soundex", value);
 
                                 const firstLetters = value.trim().substring(0, 3);
 
@@ -475,9 +473,7 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "levenshtein":
-                                if (typeof value !== "string" || value === "") {
-                                    throw new QueryError("Value for levenshtein query must be a non-empty string", "D033");
-                                }
+                                this.validateType("levenshtein", value);
 
                                 const term = value.trim();
                                 const firstLettersLev = term.substring(0, 3);
@@ -498,9 +494,7 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "mod":
-                                if (!Array.isArray(value) || value.length !== 2) {
-                                    throw new QueryError("Value for mod query must be an array with 2 elements", "D033");
-                                }
+                                this.validateType("mod", value);
 
                                 isLastOperator ? whereClause += `mod(${key}, $${index}) = $${index + 1}` : whereClause += `mod(${key}, $${index}) = $${index + 1} and `
                                 values.push(value[0], value[1]);
@@ -509,22 +503,20 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "exists":
-                                if (typeof value !== "boolean") {
-                                    throw new QueryError("Value for exists query must be a boolean", "D033");
-                                }
+                                this.validateType("exists", value);
 
                                 isLastOperator ? whereClause += value ? `"${key}" is not null` : `"${key}" is null` : whereClause += value ? `"${key}" is not null and ` : `"${key}" is null and `
                                 break;
 
                             case "isNull":
-                                if (typeof value !== "boolean") {
-                                    throw new QueryError("Value for isNull query must be a boolean", "D033");
-                                }
+                                this.validateType("isNull", value);
 
                                 isLastOperator ? whereClause += value ? `"${key}" is null` : `"${key}" is not null` : whereClause += value ? `"${key}" is null and ` : `"${key}" is not null and `
                                 break;
 
                             case "isDistinctFrom":
+                                this.validateType("isDistinctFrom", value);
+
                                 isLastOperator ? whereClause += `"${key}" is distinct from $${index}` : whereClause += `"${key}" is distinct from $${index} and `
                                 values.push(value);
 
@@ -532,35 +524,13 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "any":
-                                if (typeof value !== "string" || value === "") {
-                                    throw new QueryError("Value for any query must be a non-empty string subquery", "D033");
-                                }
+                                this.validateType("any", value);
 
-                                if (!/^\s*select/i.test(value)) {
-                                    throw new QueryError("Value for any query must be a select statement", "D033");
-                                }
-
-                                isLastOperator ? whereClause += `"${key}" = any ("${value}")` : whereClause += `"${key}" = any ("${value}") and `
-                                break;
-
-                            case "all":
                                 if (typeof value === "string") {
-                                    if (value === "") {
-                                        throw new QueryError("Value for all query must be a non-empty string", "D033");
-                                    }
-
-                                    if (!/^\s*select/i.test(value)) {
-                                        throw new QueryError("Value for all query must be a select statement", "D033");
-                                    }
-
-                                    isLastOperator ? whereClause += `"${key}" = all ("${value}")` : whereClause += `"${key}" = all ("${value}") and `
+                                    isLastOperator ? whereClause += `"${key}" = any ("${value}")` : whereClause += `"${key}" = any ("${value}") and `
                                 }
 
                                 else if (Array.isArray(value)) {
-                                    if (value.length === 0) {
-                                        throw new QueryError("Value for all query must be a non-empty array", "D033");
-                                    }
-
                                     const allPlaceholders = value.map((_, i) => `$${index + i}`).join(", ");
                                     isLastOperator ? whereClause += `"${key}" in (${allPlaceholders})` : whereClause += `"${key}" in (${allPlaceholders}) and `
 
@@ -568,16 +538,27 @@ export default class PostgresQuery extends BaseQuery {
                                     index += value.length;
                                 }
 
-                                else {
-                                    throw new QueryError("Value for all query must be a string or array", "D033");
+                                break;
+
+                            case "all":
+                                this.validateType("all", value);
+
+                                if (typeof value === "string") {
+                                    isLastOperator ? whereClause += `"${key}" = all ("${value}")` : whereClause += `"${key}" = all ("${value}") and `
+                                }
+
+                                else if (Array.isArray(value)) {
+                                    const allPlaceholders = value.map((_, i) => `$${index + i}`).join(", ");
+                                    isLastOperator ? whereClause += `"${key}" = all (${allPlaceholders})` : whereClause += `"${key}" = all (${allPlaceholders}) and `
+
+                                    values.push(...value);
+                                    index += value.length;
                                 }
 
                                 break;
 
                             case "text":
-                                if (typeof value !== "string" || value === "") {
-                                    throw new QueryError("Value for text query must be a non-empty string", "D033");
-                                }
+                                this.validateType("text", value);
 
                                 const tsquery = value.trim().split(/\s+/).map((word: string) => word.replace(/['\\]/g, '')).filter((word: string) => word.length > 0).join(" & ");
 
@@ -592,9 +573,7 @@ export default class PostgresQuery extends BaseQuery {
                                 break;
 
                             case "dateDiff":
-                                if (!Array.isArray(value) || value.length !== 2) {
-                                    throw new QueryError("Value for dateDiff query must be an array with 2 elements", "D033");
-                                }
+                                this.validateType("dateDiff", value);
 
                                 const [date1, date2] = value;
                                 const daysMatch = String(date2).match(/^(\d+)\s*days?$/i);
@@ -664,6 +643,316 @@ export default class PostgresQuery extends BaseQuery {
             }
 
             throw new QueryError(`Failed to update table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    /**
+     * Same as the update method but only update the first row found
+     * @private
+     */
+    private async handleUpdateOne(): Promise<any[] | null> {
+        try {
+            // Get where and remove 'set' before finding
+            let where = this.getWhere();
+            const whereForFind = { ...where };
+            delete whereForFind.set;
+
+            // Temporarily replace this.query.data.where with whereForFind
+            const originalWhere = this.query.data?.where;
+            this.query.data!.where = whereForFind;
+
+            const updateResult = await this.handleFindOne();
+
+            // Restore original where
+            this.query.data!.where = originalWhere;
+
+            if (!updateResult || Object.entries(updateResult).length === 0) {
+                throw new QueryError(`No data in "${this.tableName}" match the given`, "D034");
+            }
+
+            where = this.getWhere();
+            const options: unknown | null = this.query.data?.options || null;
+
+            const values: unknown[] = [];
+            let sql: string = "";
+
+            if (!(where.hasOwnProperty("set"))) {
+                throw new QueryError("\"update clause has no set field\"", "D030");
+            }
+
+            if (!(where.set instanceof Object) || Object.keys(where.set).length === 0) {
+                throw new QueryError("Invalid set type", "D030");
+            }
+
+            const setFields = Object.entries(where.set);
+            const setClause = setFields.map(([key], i) => `"${key}" = $${i + 1}`).join(", ");
+
+            for (const field of setFields) {
+                values.push(field[1]);
+            }
+
+            const id = (updateResult as any).id;
+            values.push(id);
+
+            sql += `update "${this.tableName}" set ${setClause} where id = $${setFields.length + 1}`;
+
+            // Handle RETURNING clause if specified in options
+            if (this.isReturnOption(options)) {
+                const option = options as string;
+                const parts = option.split(" ").map((part) => part.replace(/,$/, ""));
+
+                if (parts[1].trim().toLowerCase() === "all") {
+                    sql += ` returning *`;
+                }
+
+                else {
+                    const fields = parts.slice(1);
+                    const returnFields = fields.map((field) => `"${field}"`).join(", ");
+
+                    sql += ` returning ${returnFields}`;
+                }
+            }
+
+            const results = await this.executeQuery(sql, values);
+            return options ? results : null;
+        }
+
+        catch (error) {
+            if (error instanceof SchemaError || error instanceof QueryError) {
+                throw error;
+            }
+
+            throw new QueryError(`Failed to update table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    /**
+     * Handles the delete operations for postgresql
+     *
+     * @private
+     * @returns the record deleted
+     */
+    private async handleDelete(): Promise<any[]> {
+        try {
+            await this.ensureTableExists();
+            const where = this.getWhere();
+
+            let whereClause: string = "";
+            const values: unknown[] = [];
+
+            let i = 1;
+            for (const [key, value] of Object.entries(where)) {
+                if (typeof value === "string") {
+                    whereClause += `${key} = $${i}`
+
+                    values.push(value);
+                    i++;
+                }
+
+                else if (typeof value === "object") {
+                    if (value === undefined || value === null) {
+                        throw new QueryError(`Value for delete query needed`)
+                    }
+
+                    const vals = Object.entries(value);
+
+                    for (const val of vals) {
+                        const op = val[0]; // operation e.g not, nin, gte, etc
+                        const v = val[1]; // value
+
+                        switch (op) {
+                            case "gt":
+                                this.validateType("gt", v);
+
+                                whereClause += `${key} > $${i}`
+                                values.push(v);
+
+                                i++;
+                                break;
+
+                            case "lt":
+                                this.validateType("lt", v);
+
+                                whereClause += `${key} < $${i}`
+                                values.push(v);
+
+                                i++;
+                                break;
+
+                            case "gte":
+                                this.validateType("gte", v);
+
+                                whereClause += `${key} >= $${i}`
+                                values.push(v);
+
+                                i++;
+                                break;
+
+                            case "lte":
+                                this.validateType("lte", v);
+
+                                whereClause += `${key} <= $${i}`
+                                values.push(v);
+
+                                i++;
+                                break;
+
+                            case "ne": case "not":
+                                this.validateType(op, v);
+
+                                whereClause += `${key} != $${i}`
+                                values.push(v);
+
+                                i++;
+                                break;
+
+                            case "between":
+                                this.validateType("between", v);
+
+                                whereClause += `${key} between $${i} and $${i + 1}`
+                                values.push(v[0], v[1]);
+
+                                i += 2;
+                                break;
+                        }
+                    }
+
+                    //return [];
+                }
+            }
+
+            const sql: string = `delete from "${this.tableName}" where ${whereClause}`;
+            console.log(sql, values)
+            //return await this.executeQuery(sql, values);
+            return []
+        }
+
+        catch (error) {
+            if (error instanceof SchemaError || error instanceof QueryError) {
+                throw error;
+            }
+
+            throw new QueryError(`Failed to delete record from "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    private validateType(operator: string, value: any): void {
+        switch (operator) {
+            case "lt": case "gt": case "gte": case "lte": case "ne": case "not":
+                if (value === undefined || value === null) {
+                    throw new QueryError(`Value is required`);
+                }
+
+                if (typeof value !== "number") {
+                    throw new QueryError(`Value for ${operator} must be a number`, "D033");
+                }
+
+                break;
+
+            case "between":
+                if (!Array.isArray(value)) {
+                    throw new QueryError("Value for between query must be an array", "D033");
+                }
+
+                if (value.length !== 2) {
+                    throw new QueryError("Value for between query must have 2 elements", "D033");
+                }
+
+                if (!(value.every(val => {
+                    return typeof val === "number"
+                }))) {
+                    throw new QueryError("Values for between query must all be numbers", "D033");
+                }
+
+                break;
+
+            case "in": case "nin":
+                if (!Array.isArray(value)) {
+                    throw new QueryError("Value for in query must be an array", "D033");
+                }
+
+                if (value.length === 0) {
+                    throw new QueryError("Value for in query cannot be empty", "D033");
+                }
+
+                break;
+
+            case "nthContain":
+                if (typeof value !== "object") {
+                    throw new QueryError("Value for nthContain query must be an object", "D033");
+                }
+
+                break;
+
+            case "soundex": case "levenshtein":
+                if (typeof value !== "string" || value === "") {
+                    throw new QueryError(`Value for ${operator} query must be a non-empty string`, "D033");
+                }
+
+                break;
+
+            case "mod":
+                if (!Array.isArray(value) || value.length !== 2) {
+                    throw new QueryError("Value for mod query must be an array with 2 elements", "D033");
+                }
+
+                break;
+
+            case "exists": case "isNull":
+                if (typeof value !== "boolean") {
+                    throw new QueryError(`Value for ${operator} query must be a boolean`, "D033");
+                }
+
+                break;
+
+            case "any": case "all":
+                if (typeof value === "string") {
+                    if (value === "") {
+                        throw new QueryError(`Value for ${operator} query must be a non-empty string`, "D033");
+                    }
+
+                    if (!/^\s*select/i.test(value)) {
+                        throw new QueryError(`Value for ${operator} query must be a select statement`, "D033");
+                    }
+                }
+
+                else if (Array.isArray(value)) {
+                    if (value.length === 0) {
+                        throw new QueryError(`Value for ${operator} query must be a non-empty array`, "D033");
+                    }
+                }
+
+                else {
+                    throw new QueryError(`Value for ${operator} query must be a string or array`, "D033");
+                }
+
+                break;
+
+            case "text":
+                if (typeof value !== "string" || value === "") {
+                    throw new QueryError("Value for text query must be a non-empty string", "D033");
+                }
+
+                break;
+
+            case "dateDiff":
+                if (!Array.isArray(value) || value.length !== 2) {
+                    throw new QueryError("Value for dateDiff query must be an array with 2 elements", "D033");
+                }
+
+                break;
+
+            case "startsWith": case "endsWith": case "contains": case "regex": case "ilike":
+                if (typeof value !== "string" || value === "") {
+                    throw new QueryError(`Value for ${operator} query must be a non-empty string`, "D033");
+                }
+                break;
+
+            case "isDistinctFrom":
+                if (value === undefined || value === null) {
+                    throw new QueryError(`Value for ${operator} query is required`, "D033");
+                }
+                break;
         }
     }
 
@@ -815,7 +1104,7 @@ export default class PostgresQuery extends BaseQuery {
                 }
 
                 if (!/^\s*select/i.test(value.all)) {
-                    throw new QueryError(`"all" subquery operator must be a SELECT statement for field "${key}"`, "D036");
+                    throw new QueryError(`"all" subquery operator must be a select statement for field "${key}"`, "D036");
                 }
                 whereClauses.push(`"${key}" = all (${value.all})`);
                 return;

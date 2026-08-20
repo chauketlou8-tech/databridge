@@ -200,6 +200,33 @@ export class Model implements MDL {
         return await this.driver.query(this, updateQuery);
     }
 
+    public async updateOne(where?: Record<string, unknown>, options?: unknown): Promise<Document | null> {
+        const updateOneQuery: Query = {
+            operation: "updateOne",
+            type: "document",
+            data: {
+                name: this.name,
+                where,
+                options
+            }
+        }
+
+        return await this.driver.query(this, updateOneQuery);
+    }
+
+    public async delete(where?: Record<string, unknown>): Promise<any> {
+        const deleteQuery: Query = {
+            operation: "delete",
+            type: "document",
+            data: {
+                name: this.name,
+                where
+            }
+        }
+
+        return await this.driver.query(this, deleteQuery);
+    }
+
     /**
      * Creates the database table/collection for this model
      * @param Schema - The schema definition
