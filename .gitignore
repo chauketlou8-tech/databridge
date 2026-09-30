@@ -7,3 +7,4 @@ node_modules/
 *.sql
 databridge-studio
 test-output.bridge
+tests/manual

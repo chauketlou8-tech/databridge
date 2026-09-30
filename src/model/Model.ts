@@ -214,7 +214,21 @@ export class Model implements MDL {
         return await this.driver.query(this, updateOneQuery);
     }
 
-    public async delete(where?: Record<string, unknown>): Promise<any> {
+    public async findAndUpdate(where?: Record<string, unknown>): Promise<Document | null> {
+        const findAndUpdateQuery: Query = {
+            operation: "updateOne",
+            type: "document",
+            data: {
+                name: this.name,
+                where,
+                options: "return all"
+            }
+        }
+
+        return await this.driver.query(this, findAndUpdateQuery);
+    }
+
+    public async delete(where?: Record<string, unknown>): Promise<void> {
         const deleteQuery: Query = {
             operation: "delete",
             type: "document",
@@ -225,6 +239,48 @@ export class Model implements MDL {
         }
 
         return await this.driver.query(this, deleteQuery);
+    }
+
+    public async deleteOne(where?: Record<string, unknown>): Promise<any> {
+        const deleteOneQuery: Query = {
+            operation: "deleteOne",
+            type: "document",
+            data: {
+                name: this.name,
+                where
+            }
+        }
+
+        return await this.driver.query(this, deleteOneQuery);
+    }
+
+    public async findAndDelete(where?: Record<string, unknown>): Promise<any[]> {
+        const findAndDeleteQuery: Query = {
+            operation: "findAndDelete",
+            type: "document",
+            data: {
+                name: this.name,
+                where
+            }
+        }
+
+        return await this.driver.query(this, findAndDeleteQuery);
+    }
+
+    public async upsert(where?: Record<string, unknown>, update?: Record<string, unknown>, create?: Record<string, unknown>, options?: unknown): Promise<any[]> {
+        const upsertQuery: Query = {
+            operation: "upsert",
+            type: "document",
+            data: {
+                name: this.name,
+                where,
+                update,
+                create,
+                options
+            }
+        }
+
+        return await this.driver.query(this, upsertQuery);
     }
 
     /**

@@ -48,6 +48,15 @@ export default class PostgresQuery extends BaseQuery {
                 case "delete":
                     return await this.handleDelete();
 
+                case "deleteOne":
+                    return this.handleDeleteOne();
+
+                case "findAndDelete":
+                    return this.handleFindAndDelete();
+
+                case "upsert":
+                    return this.handleUpsert();
+
                 default:
                     throw new QueryError(`Operation "${this.operation}" not implemented`, "D036");
             }
@@ -127,6 +136,7 @@ export default class PostgresQuery extends BaseQuery {
             const { sql, values } = this.buildWhereClause();
             const fullSql = sql ? `select * from "${this.tableName}" where ${sql}` : `select * from "${this.tableName}"`;
             const result = await this.executeQuery(fullSql, values);
+
             return this.sterilizeResult(result || [], this.model);
 
         }
@@ -190,7 +200,7 @@ export default class PostgresQuery extends BaseQuery {
             await this.ensureTableExists();
 
             const where = this.getWhere();
-            const options: unknown | null = this.query.data?.options || null
+            const options: unknown | null = this.query.data?.options
 
             const values: unknown[] = [];
             let sql: string = "";
@@ -289,318 +299,9 @@ export default class PostgresQuery extends BaseQuery {
                         const key = clause[0];
                         const isLastOperator = operatorIndex === operatorCount - 1 && isLastClause;
 
-                        switch (operator) {
-                            case "gt":
-                                this.validateType("gt", value);
-
-                                isLastOperator ? whereClause += `${key} > $${index}` : whereClause += `${key} > $${index} and `
-                                values.push(value);
-
-                                index++;
-                                break;
-
-                            case "lt":
-                                this.validateType("lt", value);
-
-                                isLastOperator ? whereClause += `${key} < $${index}` : whereClause += `${key} < $${index} and `
-                                values.push(value);
-
-                                index++;
-                                break;
-
-                            case "gte":
-                                this.validateType("gte", value);
-
-                                isLastOperator ? whereClause += `${key} >= $${index}` : whereClause += `${key} >= $${index} and `
-                                values.push(value);
-
-                                index++;
-                                break;
-
-                            case "lte":
-                                this.validateType("lte", value);
-
-                                isLastOperator ? whereClause += `${key} <= $${index}` : whereClause += `${key} <= $${index} and `
-                                values.push(value);
-
-                                index++;
-                                break;
-
-                            case "ne": case "not":
-                                this.validateType(operator, value);
-
-                                isLastOperator ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
-                                values.push(value);
-
-                                index++;
-                                break;
-
-                            case "between":
-                                this.validateType("between", value);
-
-                                isLastOperator ? whereClause += `${key} between $${index} and $${index + 1}` : whereClause += `${key} between $${index} and $${index + 1} and `
-                                values.push(value[0], value[1]);
-
-                                index += 2;
-                                break;
-
-                            case "in":
-                                this.validateType("in", value);
-
-                                const placeholders = value.map((_:any, i:number) => `$${index + i}`).join(", ");
-                                isLastOperator ? whereClause += `${key} in (${placeholders})` : whereClause += `${key} in (${placeholders}) and `
-                                values.push(...value);
-
-                                index += value.length;
-                                break;
-
-                            case "nin":
-                                this.validateType("nin", value);
-
-                                const pls = value.map((_:any, i: number) => `$${index + i}`).join(", ");
-                                isLastOperator ? whereClause += `${key} not in (${pls})` : whereClause += `${key} not in (${pls}) and `
-
-                                values.push(...value);
-                                index += value.length;
-                                break;
-
-                            case "startsWith":
-                                this.validateType("startsWith", value);
-
-                                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
-                                values.push(`${value}%`);
-
-                                index++;
-                                break;
-
-                            case "endsWith":
-                                this.validateType("endsWith", value);
-
-                                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
-                                values.push(`%${value}`);
-
-                                index++;
-                                break;
-
-                            case "contains":
-                                this.validateType("contains", value);
-
-                                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
-                                values.push(`%${value}%`);
-
-                                index++;
-                                break;
-
-                            case "nthContain":
-                                this.validateType("nthContain", value);
-
-                                const nthEntries = Object.entries(value);
-                                const positionGroups: string[] = [];
-
-                                for (const [k, v] of nthEntries) {
-                                    let prefix = "";
-                                    switch (k) {
-                                        case "first":
-                                            prefix = "";
-                                            break;
-
-                                        case "second":
-                                            prefix = "_";
-                                            break;
-
-                                        case "third":
-                                            prefix = "__";
-                                            break;
-
-                                        default:
-                                            throw new QueryError(`Invalid position "${k}" for nthContain`, "D033");
-                                    }
-
-                                    if (typeof v === "string") {
-                                        positionGroups.push(`${key} like $${index}`);
-                                        values.push(`${prefix}${v}%`);
-                                        index++;
-                                    }
-
-                                    else if (Array.isArray(v)) {
-                                        const orConditions: string[] = [];
-
-                                        for (const val of v) {
-                                            orConditions.push(`${key} like $${index}`);
-                                            values.push(`${prefix}${val}%`);
-                                            index++;
-                                        }
-
-                                        positionGroups.push(`(${orConditions.join(" or ")})`);
-                                    }
-
-                                    else {
-                                        throw new QueryError("Invalid value for nthContain query", "D033");
-                                    }
-                                }
-
-                                const combined = positionGroups.length > 1 ? positionGroups.join(" and ") : positionGroups[0];
-                                isLastOperator ? whereClause += combined : whereClause += `${combined} and `;
-                                break;
-
-                            case "ilike":
-                                this.validateType("ilike", value);
-
-                                isLastOperator ? whereClause += `${key} ilike $${index}` : whereClause += `${key} ilike $${index} and `
-                                values.push(`%${value}%`);
-
-                                index++;
-                                break;
-
-                            case "regex":
-                                this.validateType("regex", value);
-
-                                isLastOperator ? whereClause += `"${key}" ~ $${index}` : whereClause += `"${key}" ~ $${index} and `
-                                values.push(value);
-
-                                index++;
-                                break;
-
-                            case "soundex":
-                                this.validateType("soundex", value);
-
-                                const firstLetters = value.trim().substring(0, 3);
-
-                                isLastOperator ? whereClause += `"${key}" ilike $${index}` : whereClause += `"${key}" ilike $${index} and `
-                                values.push(`${firstLetters}%`);
-
-                                index++;
-                                break;
-
-                            case "levenshtein":
-                                this.validateType("levenshtein", value);
-
-                                const term = value.trim();
-                                const firstLettersLev = term.substring(0, 3);
-
-                                const levConditions = [
-                                    `lower("${key}") = lower($${index})`,
-                                    `${key} ilike $${index + 1}`,
-                                    `${key} ilike $${index + 2}`,
-                                    `${key} ilike $${index + 3}`,
-                                    `${key} ilike $${index + 4}`
-                                ];
-
-                                const levCombined = `(${levConditions.join(" or ")})`;
-                                isLastOperator ? whereClause += levCombined : whereClause += `${levCombined} and `
-                                values.push(term, `${term}%`, `%${term}%`, `${firstLettersLev}%`, `%${term}`);
-
-                                index += 5;
-                                break;
-
-                            case "mod":
-                                this.validateType("mod", value);
-
-                                isLastOperator ? whereClause += `mod(${key}, $${index}) = $${index + 1}` : whereClause += `mod(${key}, $${index}) = $${index + 1} and `
-                                values.push(value[0], value[1]);
-
-                                index += 2;
-                                break;
-
-                            case "exists":
-                                this.validateType("exists", value);
-
-                                isLastOperator ? whereClause += value ? `"${key}" is not null` : `"${key}" is null` : whereClause += value ? `"${key}" is not null and ` : `"${key}" is null and `
-                                break;
-
-                            case "isNull":
-                                this.validateType("isNull", value);
-
-                                isLastOperator ? whereClause += value ? `"${key}" is null` : `"${key}" is not null` : whereClause += value ? `"${key}" is null and ` : `"${key}" is not null and `
-                                break;
-
-                            case "isDistinctFrom":
-                                this.validateType("isDistinctFrom", value);
-
-                                isLastOperator ? whereClause += `"${key}" is distinct from $${index}` : whereClause += `"${key}" is distinct from $${index} and `
-                                values.push(value);
-
-                                index++;
-                                break;
-
-                            case "any":
-                                this.validateType("any", value);
-
-                                if (typeof value === "string") {
-                                    isLastOperator ? whereClause += `"${key}" = any ("${value}")` : whereClause += `"${key}" = any ("${value}") and `
-                                }
-
-                                else if (Array.isArray(value)) {
-                                    const allPlaceholders = value.map((_, i) => `$${index + i}`).join(", ");
-                                    isLastOperator ? whereClause += `"${key}" in (${allPlaceholders})` : whereClause += `"${key}" in (${allPlaceholders}) and `
-
-                                    values.push(...value);
-                                    index += value.length;
-                                }
-
-                                break;
-
-                            case "all":
-                                this.validateType("all", value);
-
-                                if (typeof value === "string") {
-                                    isLastOperator ? whereClause += `"${key}" = all ("${value}")` : whereClause += `"${key}" = all ("${value}") and `
-                                }
-
-                                else if (Array.isArray(value)) {
-                                    const allPlaceholders = value.map((_, i) => `$${index + i}`).join(", ");
-                                    isLastOperator ? whereClause += `"${key}" = all (${allPlaceholders})` : whereClause += `"${key}" = all (${allPlaceholders}) and `
-
-                                    values.push(...value);
-                                    index += value.length;
-                                }
-
-                                break;
-
-                            case "text":
-                                this.validateType("text", value);
-
-                                const tsquery = value.trim().split(/\s+/).map((word: string) => word.replace(/['\\]/g, '')).filter((word: string) => word.length > 0).join(" & ");
-
-                                if (!tsquery) {
-                                    throw new QueryError("Value for text query produced invalid tsquery", "D033");
-                                }
-
-                                isLastOperator ? whereClause += `to_tsvector("${key}") @@ to_tsquery($${index})` : whereClause += `to_tsvector("${key}") @@ to_tsquery($${index}) and `
-                                values.push(tsquery);
-
-                                index++;
-                                break;
-
-                            case "dateDiff":
-                                this.validateType("dateDiff", value);
-
-                                const [date1, date2] = value;
-                                const daysMatch = String(date2).match(/^(\d+)\s*days?$/i);
-
-                                if (!daysMatch) {
-                                    throw new QueryError("Value for dateDiff query must be like '90 days'", "D033");
-                                }
-
-                                const days = parseInt(daysMatch[1]);
-                                let dateExpr: string;
-
-                                if (String(date1).toLowerCase() === "now") {
-                                    dateExpr = "now()";
-                                }
-
-                                else {
-                                    dateExpr = `$${index}`;
-                                    values.push(date1);
-                                    index++;
-                                }
-
-                                isLastOperator ? whereClause += `extract(day from (${dateExpr} - "${key}")) <= $${index}` : whereClause += `extract(day from (${dateExpr} - ${key})) <= $${index} and `
-                                values.push(days);
-
-                                index++;
-                                break;
-                        }
+                        const result = this.handleOperations(key, value, operator, isLastOperator, whereClause, values, index);
+                        whereClause = result.whereClause;
+                        index = result.index;
 
                         operatorIndex++;
                     }
@@ -615,7 +316,7 @@ export default class PostgresQuery extends BaseQuery {
                 conditionIndex++;
             }
 
-            sql += `update "${this.tableName}" set ${setClause} where ${whereClause}`
+            sql += `update "${this.tableName}" set ${setClause} where ${whereClause}`;
 
             // Handle returning clause if specified in options
             if (this.isReturnOption(options)) {
@@ -732,7 +433,7 @@ export default class PostgresQuery extends BaseQuery {
      * @private
      * @returns the record deleted
      */
-    private async handleDelete(): Promise<any[]> {
+    private async handleDelete(): Promise<void> {
         try {
             await this.ensureTableExists();
             const where = this.getWhere();
@@ -740,91 +441,92 @@ export default class PostgresQuery extends BaseQuery {
             let whereClause: string = "";
             const values: unknown[] = [];
 
-            let i = 1;
-            for (const [key, value] of Object.entries(where)) {
-                if (typeof value === "string") {
-                    whereClause += `${key} = $${i}`
+            const whereFields = Object.entries(where);
+            const totalConditions = whereFields.length;
+            let conditionIndex = 0;
 
-                    values.push(value);
-                    i++;
-                }
+            for (const [key, value] of whereFields) {
+                const isLastClause = conditionIndex === totalConditions - 1;
 
-                else if (typeof value === "object") {
-                    if (value === undefined || value === null) {
-                        throw new QueryError(`Value for delete query needed`)
-                    }
+                // Handle top-level 'or'
+                if (key === "or" && Array.isArray(value)) {
+                    const orConditions: string[] = [];
+                    let idx = values.length + 1;
 
-                    const vals = Object.entries(value);
+                    for (const condition of value) {
+                        for (const [k, v] of Object.entries(condition)) {
+                            orConditions.push(`${k} = $${idx}`);
+                            values.push(v);
 
-                    for (const val of vals) {
-                        const op = val[0]; // operation e.g not, nin, gte, etc
-                        const v = val[1]; // value
-
-                        switch (op) {
-                            case "gt":
-                                this.validateType("gt", v);
-
-                                whereClause += `${key} > $${i}`
-                                values.push(v);
-
-                                i++;
-                                break;
-
-                            case "lt":
-                                this.validateType("lt", v);
-
-                                whereClause += `${key} < $${i}`
-                                values.push(v);
-
-                                i++;
-                                break;
-
-                            case "gte":
-                                this.validateType("gte", v);
-
-                                whereClause += `${key} >= $${i}`
-                                values.push(v);
-
-                                i++;
-                                break;
-
-                            case "lte":
-                                this.validateType("lte", v);
-
-                                whereClause += `${key} <= $${i}`
-                                values.push(v);
-
-                                i++;
-                                break;
-
-                            case "ne": case "not":
-                                this.validateType(op, v);
-
-                                whereClause += `${key} != $${i}`
-                                values.push(v);
-
-                                i++;
-                                break;
-
-                            case "between":
-                                this.validateType("between", v);
-
-                                whereClause += `${key} between $${i} and $${i + 1}`
-                                values.push(v[0], v[1]);
-
-                                i += 2;
-                                break;
+                            idx++;
                         }
                     }
 
-                    //return [];
+                    const orClause = `(${orConditions.join(" or ")})`;
+                    isLastClause ? whereClause += orClause : whereClause += `${orClause} and `;
+
+                    conditionIndex++;
+                    continue;
                 }
+
+                // Handle top-level 'not'
+                if (key === "not" && typeof value === "object") {
+                    const notConditions: string[] = [];
+                    let idx = values.length + 1;
+
+                    for (const [k, v] of Object.entries(value as object)) {
+                        notConditions.push(`${k} != $${idx}`);
+                        values.push(v);
+
+                        idx++;
+                    }
+
+                    const notClause = `(${notConditions.join(" and ")})`;
+                    isLastClause ? whereClause += notClause : whereClause += `${notClause} and `;
+
+                    conditionIndex++;
+                    continue;
+                }
+
+                // Handle top-level 'exists' with relation
+                if (key === "exists" && typeof value === "object" && (value as any).relation && (value as any).where) {
+                    const relation = (value as any).relation;
+                    const whereObj = (value as any).where;
+
+                    const subWhere = Object.entries(whereObj).map(([k, v]) => `"${k}" = "${v}"`).join(" and ");
+                    const existsClause = `exists (select 1 from "${relation}" where ${subWhere})`;
+
+                    isLastClause ? whereClause += existsClause : whereClause += `${existsClause} and `;
+                    conditionIndex++;
+
+                    continue;
+                }
+
+                // Handle object operators
+                if (typeof value === "object" && value !== null) {
+                    const entries = Object.entries(value);
+                    let operatorIndex = 0;
+                    const operatorCount = entries.length;
+
+                    for (const [op, v] of entries) {
+                        const isLastOperator = operatorIndex === operatorCount - 1 && isLastClause;
+                        const result = this.handleOperations(key, v, op, isLastOperator, whereClause, values, values.length + 1);
+
+                        whereClause = result.whereClause;
+                        operatorIndex++;
+                    }
+                    conditionIndex++;
+                    continue;
+                }
+
+                // Simple equality
+                isLastClause ? whereClause += `"${key}" = $${values.length + 1}` : whereClause += `"${key}" = $${values.length + 1} and `;
+                values.push(value);
+                conditionIndex++;
             }
 
-            const sql: string = `delete from "${this.tableName}" where ${whereClause}`;
-            console.log(sql, values)
-            //return await this.executeQuery(sql, values);
-            return []
+            const sql = `delete from "${this.tableName}" where ${whereClause}`;
+            await this.executeQuery(sql, values);
         }
 
         catch (error) {
@@ -834,6 +536,429 @@ export default class PostgresQuery extends BaseQuery {
 
             throw new QueryError(`Failed to delete record from "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
         }
+    }
+
+    private async handleDeleteOne(): Promise<void> {
+        try {
+            await this.ensureTableExists();
+
+            const where = this.getWhere();
+            if (!where || Object.keys(where).length === 0) {
+                throw new QueryError("DeleteOne requires a where clause", "D030");
+            }
+
+            console.log("where:", where);
+            const result = await this.handleFindOne();
+            console.log("Result:", result);
+
+            if (!result) {
+                throw new QueryError(`No record found in "${this.tableName}" matching the given conditions`, "D034");
+            }
+
+            const id = (result as any).id;
+            const sql = `delete from "${this.tableName}" where id = $1`;
+            await this.executeQuery(sql, [id]);
+        }
+
+        catch (error) {
+            if (error instanceof SchemaError || error instanceof QueryError) {
+                throw error;
+            }
+
+            throw new QueryError(`Failed to delete one record from "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    private async handleFindAndDelete(): Promise<any[]> {
+        try {
+            await this.ensureTableExists();
+
+            const where = this.getWhere();
+            if (!where || Object.keys(where).length === 0) {
+                throw new QueryError("FindAndDelete requires a where clause", "D030");
+            }
+
+            const result = await this.handleFindOne();
+            if (!result) {
+                throw new QueryError(`No record found in "${this.tableName}" matching the given conditions`, "D034");
+            }
+
+            const id = (result as any).id;
+            const sql = `delete from "${this.tableName}" where id = $1 returning *`;
+            const deleted = await this.executeQuery(sql, [id]);
+
+            return this.sterilizeResult(deleted, this.model);
+        }
+
+        catch (error) {
+            if (error instanceof SchemaError || error instanceof QueryError) {
+                throw error;
+            }
+
+            throw new QueryError(`Failed to find and delete record from "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    private async handleUpsert(): Promise<any | null> {
+        try{
+            await this.ensureTableExists();
+
+            const res = await this.handleFindOne();
+
+            if (!this.data?.update || !this.data.create) {
+                throw new QueryError(`Upsert needs both update and create data`);
+            }
+
+            if (!res) {
+                this.query.data!.data = {
+                    ...this.data?.create
+                };
+
+                await this.handleCreateObject();
+                return [await this.handleFindOne()];
+            }
+
+            else {
+                this.query.data!.where = {
+                    ...this.getWhere(),
+                    set: {
+                        ...this.data?.update!
+                    }
+                }
+
+                delete this.data.create;
+                delete this.data.update;
+
+                return await this.handleUpdateOne();
+            }
+        }
+
+        catch (error) {
+            if (error instanceof SchemaError || error instanceof QueryError) {
+                throw error;
+            }
+            throw new QueryError(`Failed to upsert in table "${this.tableName}": ${error instanceof Error ? error.message : String(error)}`, "D031");
+        }
+    }
+
+    private handleOperations(key: string, value: any, operator: string, isLastOperator: boolean, whereClause: string, values: any[], index: number): { whereClause: string, index: number } {
+        switch (operator) {
+            case "gt":
+                this.validateType("gt", value);
+
+                isLastOperator ? whereClause += `${key} > $${index}` : whereClause += `${key} > $${index} and `
+                values.push(value);
+
+                index++;
+                break;
+
+            case "lt":
+                this.validateType("lt", value);
+
+                isLastOperator ? whereClause += `${key} < $${index}` : whereClause += `${key} < $${index} and `
+                values.push(value);
+
+                index++;
+                break;
+
+            case "gte":
+                this.validateType("gte", value);
+
+                isLastOperator ? whereClause += `${key} >= $${index}` : whereClause += `${key} >= $${index} and `
+                values.push(value);
+
+                index++;
+                break;
+
+            case "lte":
+                this.validateType("lte", value);
+
+                isLastOperator ? whereClause += `${key} <= $${index}` : whereClause += `${key} <= $${index} and `
+                values.push(value);
+
+                index++;
+                break;
+
+            case "ne": case "not":
+                this.validateType(operator, value);
+
+                isLastOperator ? whereClause += `${key} != $${index}` : whereClause += `${key} != $${index} and `
+                values.push(value);
+
+                index++;
+                break;
+
+            case "between":
+                this.validateType("between", value);
+
+                isLastOperator ? whereClause += `${key} between $${index} and $${index + 1}` : whereClause += `${key} between $${index} and $${index + 1} and `
+                values.push(value[0], value[1]);
+
+                index += 2;
+                break;
+
+            case "in":
+                this.validateType("in", value);
+
+                const placeholders = value.map((_:any, i:number) => `$${index + i}`).join(", ");
+                isLastOperator ? whereClause += `${key} in (${placeholders})` : whereClause += `${key} in (${placeholders}) and `
+                values.push(...value);
+
+                index += value.length;
+                break;
+
+            case "nin":
+                this.validateType("nin", value);
+
+                const pls = value.map((_:any, i: number) => `$${index + i}`).join(", ");
+                isLastOperator ? whereClause += `${key} not in (${pls})` : whereClause += `${key} not in (${pls}) and `
+
+                values.push(...value);
+                index += value.length;
+                break;
+
+            case "startsWith":
+                this.validateType("startsWith", value);
+
+                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
+                values.push(`${value}%`);
+
+                index++;
+                break;
+
+            case "endsWith":
+                this.validateType("endsWith", value);
+
+                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
+                values.push(`%${value}`);
+
+                index++;
+                break;
+
+            case "contains":
+                this.validateType("contains", value);
+
+                isLastOperator ? whereClause += `${key} like $${index}` : whereClause += `${key} like $${index} and `
+                values.push(`%${value}%`);
+
+                index++;
+                break;
+
+            case "nthContain":
+                this.validateType("nthContain", value);
+
+                const nthEntries = Object.entries(value);
+                const positionGroups: string[] = [];
+
+                for (const [k, v] of nthEntries) {
+                    let prefix = "";
+                    switch (k) {
+                        case "first":
+                            prefix = "";
+                            break;
+
+                        case "second":
+                            prefix = "_";
+                            break;
+
+                        case "third":
+                            prefix = "__";
+                            break;
+
+                        default:
+                            throw new QueryError(`Invalid position "${k}" for nthContain`, "D033");
+                    }
+
+                    if (typeof v === "string") {
+                        positionGroups.push(`${key} like $${index}`);
+                        values.push(`${prefix}${v}%`);
+                        index++;
+                    }
+
+                    else if (Array.isArray(v)) {
+                        const orConditions: string[] = [];
+
+                        for (const val of v) {
+                            orConditions.push(`${key} like $${index}`);
+                            values.push(`${prefix}${val}%`);
+                            index++;
+                        }
+
+                        positionGroups.push(`(${orConditions.join(" or ")})`);
+                    }
+
+                    else {
+                        throw new QueryError("Invalid value for nthContain query", "D033");
+                    }
+                }
+
+                const combined = positionGroups.length > 1 ? positionGroups.join(" and ") : positionGroups[0];
+                isLastOperator ? whereClause += combined : whereClause += `${combined} and `;
+                break;
+
+            case "ilike":
+                this.validateType("ilike", value);
+
+                isLastOperator ? whereClause += `${key} ilike $${index}` : whereClause += `${key} ilike $${index} and `
+                values.push(`%${value}%`);
+
+                index++;
+                break;
+
+            case "regex":
+                this.validateType("regex", value);
+
+                isLastOperator ? whereClause += `"${key}" ~ $${index}` : whereClause += `"${key}" ~ $${index} and `
+                values.push(value);
+
+                index++;
+                break;
+
+            case "soundex":
+                this.validateType("soundex", value);
+
+                const firstLetters = value.trim().substring(0, 3);
+
+                isLastOperator ? whereClause += `"${key}" ilike $${index}` : whereClause += `"${key}" ilike $${index} and `
+                values.push(`${firstLetters}%`);
+
+                index++;
+                break;
+
+            case "levenshtein":
+                this.validateType("levenshtein", value);
+
+                const term = value.trim();
+                const firstLettersLev = term.substring(0, 3);
+
+                const levConditions = [
+                    `lower("${key}") = lower($${index})`,
+                    `${key} ilike $${index + 1}`,
+                    `${key} ilike $${index + 2}`,
+                    `${key} ilike $${index + 3}`,
+                    `${key} ilike $${index + 4}`
+                ];
+
+                const levCombined = `(${levConditions.join(" or ")})`;
+                isLastOperator ? whereClause += levCombined : whereClause += `${levCombined} and `
+                values.push(term, `${term}%`, `%${term}%`, `${firstLettersLev}%`, `%${term}`);
+
+                index += 5;
+                break;
+
+            case "mod":
+                this.validateType("mod", value);
+
+                isLastOperator ? whereClause += `mod(${key}, $${index}) = $${index + 1}` : whereClause += `mod(${key}, $${index}) = $${index + 1} and `
+                values.push(value[0], value[1]);
+
+                index += 2;
+                break;
+
+            case "exists":
+                this.validateType("exists", value);
+
+                isLastOperator ? whereClause += value ? `"${key}" is not null` : `"${key}" is null` : whereClause += value ? `"${key}" is not null and ` : `"${key}" is null and `
+                break;
+
+            case "isNull":
+                this.validateType("isNull", value);
+
+                isLastOperator ? whereClause += value ? `"${key}" is null` : `"${key}" is not null` : whereClause += value ? `"${key}" is null and ` : `"${key}" is not null and `
+                break;
+
+            case "isDistinctFrom":
+                this.validateType("isDistinctFrom", value);
+
+                isLastOperator ? whereClause += `"${key}" is distinct from $${index}` : whereClause += `"${key}" is distinct from $${index} and `
+                values.push(value);
+
+                index++;
+                break;
+
+            case "any":
+                this.validateType("any", value);
+
+                if (typeof value === "string") {
+                    isLastOperator ? whereClause += `"${key}" = any ("${value}")` : whereClause += `"${key}" = any ("${value}") and `
+                }
+
+                else if (Array.isArray(value)) {
+                    const allPlaceholders = value.map((_, i) => `$${index + i}`).join(", ");
+                    isLastOperator ? whereClause += `"${key}" in (${allPlaceholders})` : whereClause += `"${key}" in (${allPlaceholders}) and `
+
+                    values.push(...value);
+                    index += value.length;
+                }
+
+                break;
+
+            case "all":
+                this.validateType("all", value);
+
+                if (typeof value === "string") {
+                    isLastOperator ? whereClause += `"${key}" = all ("${value}")` : whereClause += `"${key}" = all ("${value}") and `
+                }
+
+                else if (Array.isArray(value)) {
+                    const allPlaceholders = value.map((_, i) => `$${index + i}`).join(", ");
+                    isLastOperator ? whereClause += `"${key}" = all (${allPlaceholders})` : whereClause += `"${key}" = all (${allPlaceholders}) and `
+
+                    values.push(...value);
+                    index += value.length;
+                }
+
+                break;
+
+            case "text":
+                this.validateType("text", value);
+
+                const tsquery = value.trim().split(/\s+/).map((word: string) => word.replace(/['\\]/g, '')).filter((word: string) => word.length > 0).join(" & ");
+
+                if (!tsquery) {
+                    throw new QueryError("Value for text query produced invalid tsquery", "D033");
+                }
+
+                isLastOperator ? whereClause += `to_tsvector("${key}") @@ to_tsquery($${index})` : whereClause += `to_tsvector("${key}") @@ to_tsquery($${index}) and `
+                values.push(tsquery);
+
+                index++;
+                break;
+
+            case "dateDiff":
+                this.validateType("dateDiff", value);
+
+                const [date1, date2] = value;
+                const daysMatch = String(date2).match(/^(\d+)\s*days?$/i);
+
+                if (!daysMatch) {
+                    throw new QueryError("Value for dateDiff query must be like '90 days'", "D033");
+                }
+
+                const days = parseInt(daysMatch[1]);
+                let dateExpr: string;
+
+                if (String(date1).toLowerCase() === "now") {
+                    dateExpr = "now()";
+                }
+
+                else {
+                    dateExpr = `$${index}`;
+                    values.push(date1);
+                    index++;
+                }
+
+                isLastOperator ? whereClause += `extract(day from (${dateExpr} - "${key}")) <= $${index}` : whereClause += `extract(day from (${dateExpr} - ${key})) <= $${index} and `
+                values.push(days);
+
+                index++;
+                break;
+        }
+
+        return {
+            whereClause,
+            index
+        };
     }
 
     private validateType(operator: string, value: any): void {

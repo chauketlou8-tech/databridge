@@ -31,17 +31,16 @@ async function main() {
 
     const employees = await model.find();
 
-    //console.log("Before delete: ", employees);
+    console.log("Before delete: ", employees);
 
     await model.delete({
         age: {
-            gt: 20,
             between: [20, 30],
         }
     });
 
     const employeesAfterFind = await model.find();
-    //console.log("After delete: ", employeesAfterFind);
+    console.log("After delete: ", employeesAfterFind);
 
     //await db.close();
 }

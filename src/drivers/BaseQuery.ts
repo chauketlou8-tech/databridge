@@ -16,7 +16,7 @@ export default abstract class BaseQuery {
     protected fields: Record<string, any> = {};
     protected tableName: string = "";
 
-    protected constructor(query: Query, model: Model | null = null) {
+    protected constructor(query: Query) {
         this.query = query;
         this.operation = this.query.operation;
         this.fields = {};
